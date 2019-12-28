@@ -1,0 +1,18 @@
+{
+	"eslint.autoFixOnSave": true,
+	"editor.tabSize": 3,
+	"editor.insertSpaces": false,
+	"editor.fontFamily": "Monaco, Consolas, 'Courier New', monospace",
+	"editor.fontSize": 13,
+	"files.autoSave": "onFocusChange",
+	"files.eol": "\n",
+	"editor.detectIndentation": true,
+	"editor.tabCompletion": "on",
+	"python.linting.pylintEnabled": false,
+	"python.linting.flake8Enabled": true,
+	"python.linting.enabled": true,
+	"[python]": {
+		"editor.insertSpaces": true,
+		"editor.tabSize": 4
+	}
+}

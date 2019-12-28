@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+	<!-- Required meta tags -->
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+	<!-- Bootstrap CSS -->
+	<link rel="stylesheet" href="/public/css/vendor/bootstrap/bootstrap.min.css">
+	<link rel="stylesheet" href="/public/css/style.css">
+
+	<title>Blood Pressure</title>
+</head>
+
+<body>
+
+	<div class="contaier-fluid">
+		<div class="row-100">
+			<div data-includeHTML="public/html/layout/navbar.html" id="navbar-container"></div>
+		</div>
+		<div class="row" style="margin-top: 56px;">
+			<div class="col-3">
+				<div data-includeHTML="public/html/layout/bp-sidebar.html" id="bp-sidebar-container"></div>
+			</div>
+			<div class="col-7 mt-5">
+				<div id="signals">
+					<div data-includeHTML="public/html/display/ecg.html"></div>
+					<div data-includeHTML="public/html/display/ppgarm-ir.html"></div>
+					<div data-includeHTML="public/html/display/ppgleg.html"></div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Optional JavaScript -->
+	<!-- jQuery first, then Popper.js, then Bootstrap JS -->
+	<script src="/public/js/vendor/jquery/jquery-3.4.1.min.js"></script>
+	<script src="/public/js/vendor/popper/popper.min.js"></script>
+	<script src="/public/js/vendor/bootstrap/bootstrap.min.js"></script>
+
+	<!-- Scripts -->
+	<script src="/public/js/utils/load.js"></script>
+
+</body>
+
+</html>

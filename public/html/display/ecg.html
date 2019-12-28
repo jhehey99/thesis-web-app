@@ -1,0 +1,15 @@
+<div>
+
+	<h3>ECG</h3>
+	<div id="ecg-graph"></div>
+
+	<!-- Plotly -->
+	<script src="/public/js/vendor/plotly/plotly-latest.min.js"></script>
+
+	<!-- Sockets -->
+	<script src="/socket.io/socket.io.js"></script>
+	<script src="/public/js/socket/display-socket.js"></script>
+	<script>
+		display("/socket/ecg", "ecg-graph", "display-ecg");
+	</script>
+</div>
