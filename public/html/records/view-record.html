@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<!-- Required meta tags -->
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+	<!-- Bootstrap CSS -->
+	<link rel="stylesheet" href="/public/css/vendor/bootstrap/bootstrap.min.css">
+	<link rel="stylesheet" href="/public/css/vendor/pagination/pagination.css">
+	<link rel="stylesheet" href="/public/css/style.css">
+
+	<title>View Record</title>
+
+</head>
+<body>
+	<div class="contaier-fluid">
+		<div class="row-100">
+			<div data-includeHTML="/public/html/layout/navbar.html" id="navbar-container"></div>
+		</div>
+		<div class="row-100 ml-4 mr-4" style="margin-top: 5%; margin-bottom: 3%; display: block;">
+			<h4>View Single Record</h4>
+			<ul data-bind="foreach: figureUrls, visible: figureUrls().length > 0" style="list-style-type:none;">
+				<div style="text-align: center;">
+					<h4>Figure Title</h4>
+					<svg width="1000" height="600">
+						<image data-bind="attr: { 'href': figureUrl }" width="1000" height="600"></image>
+					</svg>
+				</div>
+			</ul>
+		</div>
+	</div>
+
+	<!-- Optional JavaScript -->
+	<!-- jQuery first, then Popper.js, then Bootstrap JS -->
+	<script src="/public/js/vendor/jquery/jquery-3.4.1.min.js"></script>
+	<script src="/public/js/vendor/popper/popper.min.js"></script>
+	<script src="/public/js/vendor/bootstrap/bootstrap.min.js"></script>
+	<script src="/public/js/vendor/knockout/knockout-3.5.1.js"></script>
+	<script src="/public/js/vendor/knockout/knockout.mapping-latest.js"></script>
+	<script src="/public/js/records/view-record.js"></script>
+
+	<!-- Scripts -->
+	<script src="/public/js/utils/load.js"></script>
+
+</body>
+</html>

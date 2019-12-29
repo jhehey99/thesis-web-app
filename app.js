@@ -27,10 +27,10 @@ app.use(require("./middlewares/send-html"));
 /**
  * Routes
  */
-app.use("/", require("./routes/index"));
-app.use("/bp", require("./routes/bp"));
-app.use("/bos", require("./routes/bos"));
-app.use("/records", require("./routes/records"));
+app.use("/", require("./routes/views/index"));
+app.use("/bp", require("./routes/views/bp"));
+app.use("/bos", require("./routes/views/bos"));
+app.use("/records", require("./routes/views/records"));
 app.use("/api/accounts", require("./routes/api/accounts"));
 app.use("/api/records", require("./routes/api/records"));
 

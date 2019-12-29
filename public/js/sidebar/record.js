@@ -34,7 +34,7 @@ function postRecord(recordType) {
 function getNewRecordId() {
 	console.log("Get new Record Id");
 	$.ajax({
-		url: "/api/records/newRecordId",
+		url: "/api/records/etc/newRecordId",
 		type: "get",
 		dataType: "json",
 	}).done(function (data, status) {

@@ -32,18 +32,43 @@ router.get("/", function (req, res) {
 });
 
 /**
+ * Get Record given the recordId as parameter
+ */
+router.get("/:recordId(\\w+)/", function (req, res) {
+	var recordId = req.params.recordId;
+	console.log(`Records GET - Get record by recordId: ${recordId}`);
+	Record.findOne({ recordId: recordId })
+		.populate({ path: "accountId", select: "username name age" })
+		.exec(function (err, record) {
+			if (err) { console.error(err); return res.json(err); }
+			return res.json(record);
+		});
+});
+
+/**
+ * Get latest record data
+ */
+router.get("/etc/latest", function (req, res) {
+	console.log("Records GET - Get latest record");
+	Record.findOne()
+		.sort({ dateRecorded: -1 })
+		.populate({ path: "accountId", select: "username name age" })
+		.exec(function (err, record) {
+			if (err) { console.error(err); return res.json(err); }
+			return res.redirect(`/records/${record.recordId}`);
+		});
+});
+
+/**
  * Get total count of records
  */
-router.get("/count", function (req, res) {
+router.get("/etc/count", function (req, res) {
 	console.log("Records GET - Get total count of records");
 	Record.countDocuments().exec(function (err, count) {
-		if (err) {
-			console.error(err);
-			return res.json({ count: 0 });
-		}
+		if (err) { console.error(err); return res.json({ count: 0 }); }
 		return res.json(count);
-	})
-})
+	});
+});
 
 // find records with given account id
 // Record.find({ accountId: "5dc585082938ce3348753809" })
@@ -56,12 +81,10 @@ router.get("/count", function (req, res) {
 /**
  * Get a new and unique record id
  */
-router.get("/newRecordId", function (req, res) {
+router.get("/etc/newRecordId", function (req, res) {
 	var recordId = uniqid().split("").reverse().join("");
 	console.log(`Records GET - Generate new record id: ${recordId}`);
-	res.json({
-		recordId
-	});
+	res.json({ recordId });
 });
 
 /**

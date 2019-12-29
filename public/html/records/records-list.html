@@ -16,9 +16,9 @@
 <body>
 	<div class="contaier-fluid">
 		<div class="row-100">
-			<div data-includeHTML="public/html/layout/navbar.html" id="navbar-container"></div>
+			<div data-includeHTML="/public/html/layout/navbar.html" id="navbar-container"></div>
 		</div>
-		<div id="records-pagination" class="row-100 w-50 mx-auto" style="margin-top: 5%; display: block;">
+		<div id="records-pagination" class="row-100 w-50 mx-auto" style="margin-top: 5%; margin-bottom: 3%; display: block;">
 			<div class="data-container">
 				<ul data-bind="foreach: records, visible: records().length > 0" style="list-style-type:none;">
 					<li class="mb-4">
@@ -32,7 +32,7 @@
 								<h5 class="card-text">Name: <span data-bind="text: accountId.name"></span> </h5>
 								<h6 class="card-text">Age: <span data-bind="text: accountId.age"></span></h6>
 								<h6 class="card-text">Date Recorded: <span data-bind="text: dateRecorded"></span></h6>
-							  <a href="#" class="btn btn-primary float-right">View Record</a>
+							  <a data-bind="attr: { 'href': recordUrl }" class="btn btn-primary float-right">View Record</a>
 							</div>
 						 </div>
 					</li>
@@ -49,7 +49,7 @@
 	<script src="/public/js/vendor/pagination/pagination.min.js"></script>
 	<script src="/public/js/vendor/knockout/knockout-3.5.1.js"></script>
 	<script src="/public/js/vendor/knockout/knockout.mapping-latest.js"></script>
-	<script src="/public/js/records/view-records.js"></script>
+	<script src="/public/js/records/records-list.js"></script>
 
 	<!-- Scripts -->
 	<script src="/public/js/utils/load.js"></script>
