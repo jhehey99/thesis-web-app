@@ -30,6 +30,7 @@ app.use(require("./middlewares/send-html"));
 app.use("/", require("./routes/index"));
 app.use("/bp", require("./routes/bp"));
 app.use("/bos", require("./routes/bos"));
+app.use("/records", require("./routes/records"));
 app.use("/api/accounts", require("./routes/api/accounts"));
 app.use("/api/records", require("./routes/api/records"));
 

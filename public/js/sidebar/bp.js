@@ -46,7 +46,7 @@ function onRecordArmClicked(e) {
 			io.connect("/socket/process/bparm").emit("process-bparm", { recordId });
 		},
 		onFinish: function () {
-			postRecord();
+			postRecord("Blood Pressure Arm");
 		}
 	});
 }
@@ -97,7 +97,7 @@ function onRecordLegClicked(e) {
 			io.connect("/socket/process/bpleg").emit("process-bpleg", { recordId });
 		},
 		onFinish: function () {
-			postRecord();
+			postRecord("Blood Pressure Leg");
 		}
 	});
 }
@@ -111,5 +111,5 @@ $(function () {
 	recordArm.addEventListener("click", onRecordArmClicked);
 
 	var recordLeg = document.getElementById("recordLeg");
-	recordLeg.addEventListener("click", onRecordArmClicked);
+	recordLeg.addEventListener("click", onRecordLegClicked);
 });

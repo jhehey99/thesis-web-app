@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<!-- Required meta tags -->
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+	<!-- Bootstrap CSS -->
+	<link rel="stylesheet" href="/public/css/vendor/bootstrap/bootstrap.min.css">
+	<link rel="stylesheet" href="/public/css/vendor/pagination/pagination.css">
+	<link rel="stylesheet" href="/public/css/style.css">
+
+	<title>Records</title>
+
+</head>
+<body>
+	<div class="contaier-fluid">
+		<div class="row-100">
+			<div data-includeHTML="public/html/layout/navbar.html" id="navbar-container"></div>
+		</div>
+		<div id="records-pagination" class="row-100 w-50 mx-auto" style="margin-top: 5%; display: block;">
+			<div class="data-container">
+				<ul data-bind="foreach: records, visible: records().length > 0" style="list-style-type:none;">
+					<li class="mb-4">
+						<div class="card mr-5 ">
+							<div class="card-header">
+							  <h5>Type: <span data-bind="text: recordType"></span></h5>
+							</div>
+							<div class="card-body">
+								<h5 class="card-title">ID: <span data-bind="text: recordId"></span></h5>
+								<h5 class="card-text">Username: <span data-bind="text: accountId.username"></span> </h5>
+								<h5 class="card-text">Name: <span data-bind="text: accountId.name"></span> </h5>
+								<h6 class="card-text">Age: <span data-bind="text: accountId.age"></span></h6>
+								<h6 class="card-text">Date Recorded: <span data-bind="text: dateRecorded"></span></h6>
+							  <a href="#" class="btn btn-primary float-right">View Record</a>
+							</div>
+						 </div>
+					</li>
+				</ul>
+			</div>
+		</div>
+	</div>
+
+	<!-- Optional JavaScript -->
+	<!-- jQuery first, then Popper.js, then Bootstrap JS -->
+	<script src="/public/js/vendor/jquery/jquery-3.4.1.min.js"></script>
+	<script src="/public/js/vendor/popper/popper.min.js"></script>
+	<script src="/public/js/vendor/bootstrap/bootstrap.min.js"></script>
+	<script src="/public/js/vendor/pagination/pagination.min.js"></script>
+	<script src="/public/js/vendor/knockout/knockout-3.5.1.js"></script>
+	<script src="/public/js/vendor/knockout/knockout.mapping-latest.js"></script>
+	<script src="/public/js/records/view-records.js"></script>
+
+	<!-- Scripts -->
+	<script src="/public/js/utils/load.js"></script>
+
+</body>
+</html>

@@ -1,12 +1,11 @@
 function alertReload(data, status) {
 	console.log(data, status);
 	setTimeout(function () {
-		alert(data, status);
 		window.location.reload();
-	}, 500);
+	}, 1000);
 }
 
-function postRecord() {
+function postRecord(recordType) {
 	// get info from localStorage, JSON form
 	var info = JSON.parse(localStorage.getItem("sidebarInfo"));
 
@@ -14,6 +13,7 @@ function postRecord() {
 	var recordForm = document.getElementById("sidebar-record-form");
 	var formData = new FormData(recordForm);
 	var record = JSON.parse(JSON.stringify(Object.fromEntries(formData)));
+	record.recordType = recordType;
 
 	$.ajax({
 		url: "/api/records/new",

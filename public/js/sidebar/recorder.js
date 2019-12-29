@@ -25,6 +25,7 @@ function startRecorder(config) {
 
 					showElement("recording-container", false);
 					showElement("recording-finished", true);
+					showElement("recording-button", false);
 					showElement("record-container", true);
 
 					// to avoid duplicate recording intervals

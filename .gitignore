@@ -1,2 +1,4 @@
-node_modules/*
-tmp/*
+.gitignore
+tmp
+node_modules
+lib/py/thesis-venv

@@ -39,11 +39,11 @@ if len(sys.argv) > 1:
     print("--------------------------------------------------")
 
     # parse arguments
-    dataPath = sys.argv[1]
-    config = json.loads(sys.argv[2]).items()
+    config = json.loads(sys.argv[1])
+    dataPath = config["dataPath"]
 
     print(f"Config - DataPath: {dataPath}")
-    for key, val in config:
+    for key, val in config.items():
         print(f"Config - {key}: {val}")
 
     print("--------------------------------------------------")
@@ -82,21 +82,21 @@ if len(sys.argv) > 1:
     # Get same count from ir signal by stripping "<<" and ">>" - << | ... | >>
     if irCount > redCount:
         countDiffHalf = (irCount - redCount) // 2
-        irTimes = np.array(irTimes[countDiffHalf:irCount-countDiffHalf])
-        irValues = np.array(irValues[countDiffHalf:irCount-countDiffHalf])
+        irTimes = np.array(irTimes[countDiffHalf:irCount - countDiffHalf])
+        irValues = np.array(irValues[countDiffHalf:irCount - countDiffHalf])
         irCount = min(len(irTimes), len(irValues))
         # TODO: What if baliktad, redCount > irCount
 
-    print(f"Preprocessing - KeyTime: {keyTime}, KeyIndex: {keyIndex}, \
-          RedCount: {redCount}, IRCount: {irCount}")
+    print(
+        f"Preprocessing - KeyTime: {keyTime}, KeyIndex: {keyIndex}, RedCount: {redCount}, IRCount: {irCount}")
 
     print("--------------------------------------------------")
     # Processing
-    print(f"Processing - {config["name"]}")
+    print(f"Processing - {config['name']}")
     figures = []
     AC, DC = 0, 1
     irComponents, redComponents = [], []
-    inputData = np.array([[irCount, irTime, irValues],
+    inputData = np.array([[irCount, irTimes, irValues],
                           [redCount, redTimes, redValues]])
 
     for inputIndex, data in enumerate(inputData):
@@ -132,7 +132,7 @@ if len(sys.argv) > 1:
 
         # Plot Filtered Signal
         print("Plotting - Filtered Signal")
-        plt.subplot(subplot_loc)
+        plt.subplot(subplotLoc)
         subplotLoc += 1
         plt.title("Pre-processed Signal")
         plt.ylabel("ADC Value")
@@ -233,8 +233,8 @@ if len(sys.argv) > 1:
         # ------------------------------------------------------------------
         # Saving Figure
         # TODO: Get figure filename from the config
-        print("Figure - Saving")
-        figureFilename = "mamamo.svg"
+        figureFilename = f"{config['figuresPath']}/{config['figureNames'][inputIndex]}.{config['figureType']}"
+        print(f"Figure - Saving - {figureFilename}")
         plt.tight_layout
         plt.savefig(figureFilename, format="svg", bbox_inches='tight')
 

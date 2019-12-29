@@ -7,4 +7,6 @@ var schema = mongoose.Schema({
 	age: types.Number
 });
 
+schema.set('toObject', { virtuals: true });
+
 module.exports = mongoose.model("accounts", schema);

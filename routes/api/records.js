@@ -11,12 +11,47 @@ const Record = require("../../models/record");
 router.get("/", function (req, res) {
 	//TODO AUSIN UNG DISPLAY
 	console.log("Records GET - Get all records");
-	Record.find(function (err, docs) {
-		if (err) return console.error(err);
-	}).then(function (docs) {
-		res.json(docs);
-	});
+
+	console.log("Records GET - query string");
+	console.log(req.query);
+
+	var pageSize = parseInt(req.query.pageSize);
+	var pageNumber = parseInt(req.query.pageNumber);
+
+	Record.find()
+		.limit(pageSize)
+		.skip(pageSize * (pageNumber - 1))
+		.populate({ path: "accountId", select: "username name age" })
+		.exec(function (err, records) {
+			if (err) {
+				console.error(err);
+				return res.json(err);
+			}
+			return res.json(records);
+		});
 });
+
+/**
+ * Get total count of records
+ */
+router.get("/count", function (req, res) {
+	console.log("Records GET - Get total count of records");
+	Record.countDocuments().exec(function (err, count) {
+		if (err) {
+			console.error(err);
+			return res.json({ count: 0 });
+		}
+		return res.json(count);
+	})
+})
+
+// find records with given account id
+// Record.find({ accountId: "5dc585082938ce3348753809" })
+// 	.populate({ path: "accountId", select: "name age" })
+// 	.exec(function (err, records) {
+// 		if (err) return console.error(err);
+// 		res.json(records);
+// 	});
 
 /**
  * Get a new and unique record id
@@ -30,6 +65,20 @@ router.get("/newRecordId", function (req, res) {
 });
 
 /**
+ * Helper function for new records
+ */
+function saveRecord(record, account, res) {
+	record.accountId = account._id;
+	record.save(function (err, rec) {
+		if (err) return console.error(err);
+		console.log(`Records POST - /records/new - Record saved - recordId: ${rec.recordId} to ${account.username}`);
+		return res.json({
+			message: "Record Saved"
+		});
+	});
+}
+
+/**
  * Create a new record, along with account info
  */
 router.post("/new", function (req, res) {
@@ -39,31 +88,36 @@ router.post("/new", function (req, res) {
 	var record = new Record({
 		accountId: account._id,
 		recordId: req.body.record.recordId,
+		recordType: req.body.record.recordType,
 		dateRecorded: Date.now()
 	});
 
-	Account.find({
+	Account.findOne({
 		username: account.username
-	}, function (err, doc) {
+	}, function (err, foundAccount) {
 		if (err) return console.error(err);
 
-		if (doc.length <= 0) {
-			account.save(function (err, doc) {
+		// no account found, we save the new account then save the record
+		if (foundAccount == null) {
+			account.save(function (err, savedAccount) {
 				if (err) return console.error(err);
-				console.log("Records POST - /records/new - Account saved");
+				console.log(`Records POST - /records/new - New Account Saved with username: ${savedAccount.username}, name: ${savedAccount.name}`);
+				return saveRecord(record, savedAccount, res);
 			});
 		} else {
-			console.log("Records POST - /records/new - Account exists");
+			if (foundAccount.name != account.name || foundAccount.age != account.age) {
+				// if found, but different name or age, we update the name or age, then save the record
+				foundAccount.update({ name: account.name, age: account.age }, function (err) {
+					if (err) return console.error(err);
+					console.log(`Records POST - /records/new - Updated Account with username: ${foundAccount.username}`);
+					return saveRecord(record, foundAccount, res);
+				})
+			} else {
+				// found an existing account, so just save the record
+				console.log(`Records POST - /records/new - Found Existing Account with username: ${foundAccount.username}`);
+				return saveRecord(record, foundAccount, res);
+			}
 		}
-	}).then(function (doc) {
-		record.save(function (err, doc) {
-			if (err) return console.error(err);
-			console.log("Records POST - /records/new - Record saved");
-		});
-	});
-
-	res.json({
-		message: "Account and Record saved"
 	});
 });
 

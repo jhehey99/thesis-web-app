@@ -1,0 +1,23 @@
+# Pip and virtual environments
+https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/
+
+######
+install mo ung nasa requirements.txt
+
+######
+# create virtual environment
+> py -m venv thesis-env
+
+# activate virtual environment
+> .\thesis-env\Scripts\activate
+
+(thesis-env) > python -m pip install --upgrade pip
+(thesis-env) > pip install numpy
+(thesis-env) > pip install matplotlib
+(thesis-env) > pip install scipy
+
+
+
+##### test if working ung package
+> .\thesis-env\Scripts\python
+>>> import numpy
