@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
 	<!-- Required meta tags -->
 	<meta charset="UTF-8">
@@ -13,18 +14,20 @@
 	<title>Records</title>
 
 </head>
+
 <body>
 	<div class="contaier-fluid">
 		<div class="row-100">
-			<div data-includeHTML="/public/html/layout/navbar.html" id="navbar-container"></div>
+			<div data-includeHTML="/public/html/navbar/navbar.html" id="navbar-container"></div>
 		</div>
-		<div id="records-pagination" class="row-100 w-50 mx-auto" style="margin-top: 5%; margin-bottom: 3%; display: block;">
+		<div id="records-pagination" class="row-100 w-50 mx-auto"
+			style="margin-top: 5%; margin-bottom: 3%; display: block;">
 			<div class="data-container">
 				<ul data-bind="foreach: records, visible: records().length > 0" style="list-style-type:none;">
 					<li class="mb-4">
 						<div class="card mr-5 ">
 							<div class="card-header">
-							  <h5 data-bind="text: title"></span></h5>
+								<h5 data-bind="text: title"></span></h5>
 							</div>
 							<div class="card-body">
 								<h5 class="card-title">ID: <span data-bind="text: recordId"></span></h5>
@@ -32,9 +35,9 @@
 								<h5 class="card-text">Name: <span data-bind="text: accountId.name"></span> </h5>
 								<h6 class="card-text">Age: <span data-bind="text: accountId.age"></span></h6>
 								<h6 class="card-text">Date Recorded: <span data-bind="text: dateRecorded"></span></h6>
-							  <a data-bind="attr: { 'href': recordUrl }" class="btn btn-primary float-right">View Record</a>
+								<a data-bind="attr: { 'href': recordUrl }" class="btn btn-primary float-right">View Record</a>
 							</div>
-						 </div>
+						</div>
 					</li>
 				</ul>
 			</div>
@@ -55,4 +58,5 @@
 	<script src="/public/js/utils/load.js"></script>
 
 </body>
+
 </html>

@@ -41,6 +41,10 @@ app.use("/api/records", require("./routes/api/records"));
 const dataSocketConfig = require("./config/datasocket");
 var DataSocket = require("./lib/socket/datasocket");
 
+/* Device Socket */
+const deviceSocketConfig = require("./config/devicesocket");
+var DeviceSocket = require("./lib/socket/devicesocket");
+
 /* Process Sockets */
 const processSocketConfig = require("./config/processsocket");
 var ProcessSocket = require("./lib/socket/processsocket");
@@ -50,13 +54,21 @@ const pyConfig = require("./config/pyrunner");
 var PyRunner = require("./lib/py/pyrunner");
 
 app.setSocket = function (io) {
+	/* Client Sockets for testing */
 	require("./lib/socket/test")(io);
+
+	io.on("connection", function (socket) {
+		console.log(`SocketIO - Connected socketId: ${socket.id}`);
+	});
 
 	/* Data Sockets */
 	var ecgSocket = new DataSocket(io, dataSocketConfig.ecg);
 	var ppgarmirSocket = new DataSocket(io, dataSocketConfig.ppgarmir);
 	var ppgarmredSocket = new DataSocket(io, dataSocketConfig.ppgarmred);
 	var ppglegSocket = new DataSocket(io, dataSocketConfig.ppgleg);
+
+	/* Device Socket */
+	var deviceSocket = new DeviceSocket(io, deviceSocketConfig);
 
 	/* Python Process Runners */
 	var bparmPyRunner = new PyRunner(pyConfig.bparm);
