@@ -20,9 +20,9 @@
 		</div>
 		<div class="row-100 ml-4 mr-4" style="margin-top: 5%; margin-bottom: 3%; display: block;">
 			<h4>View Single Record</h4>
+			<h4 data-bind="text: title">Figure Title</h4>
 			<ul data-bind="foreach: figureUrls, visible: figureUrls().length > 0" style="list-style-type:none;">
 				<div style="text-align: center;">
-					<h4>Figure Title</h4>
 					<svg width="1000" height="600">
 						<image data-bind="attr: { 'href': figureUrl }" width="1000" height="600"></image>
 					</svg>

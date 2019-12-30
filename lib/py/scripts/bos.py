@@ -92,7 +92,7 @@ if len(sys.argv) > 1:
 
     print("--------------------------------------------------")
     # Processing
-    print(f"Processing - {config['name']}")
+    print(f"Processing - {config['title']}")
     figures = []
     AC, DC = 0, 1
     irComponents, redComponents = [], []

@@ -1,6 +1,6 @@
 module.exports = {
 	bparm: {
-		name: "Blood Pressure Arm",
+		title: "Blood Pressure Arm",
 		pyScript: "test.py",
 		dataPath: "",
 		dataFiles: ["ecg.txt", "ppgarm-ir.txt"],
@@ -9,7 +9,7 @@ module.exports = {
 		figureType: "svg"
 	},
 	bpleg: {
-		name: "Blood Pressure Leg",
+		title: "Blood Pressure Leg",
 		pyScript: "test.py",
 		dataPath: "",
 		dataFiles: ["ecg.txt", "ppgleg.txt"],
@@ -18,7 +18,7 @@ module.exports = {
 		figureType: "svg"
 	},
 	bos: {
-		name: "Blood Oxygen Saturation",
+		title: "Blood Oxygen Saturation",
 		pyScript: "bos.py",
 		dataPath: "",
 		dataFiles: ["ppgarm-ir.txt", "ppgarm-red.txt"],

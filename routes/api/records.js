@@ -106,12 +106,17 @@ function saveRecord(record, account, res) {
  */
 router.post("/new", function (req, res) {
 	console.log("Records POST - New Record");
+	const pyConfig = require("../../config/pyrunner");
+	var recordType = req.body.record.recordType;
+	var recordConfig = pyConfig[recordType];
 
 	var account = new Account(req.body.info);
 	var record = new Record({
 		accountId: account._id,
 		recordId: req.body.record.recordId,
-		recordType: req.body.record.recordType,
+		recordType: recordType,
+		title: recordConfig.title,
+		figureNames: recordConfig.figureNames,
 		dateRecorded: Date.now()
 	});
 

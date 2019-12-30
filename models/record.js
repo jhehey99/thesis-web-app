@@ -5,6 +5,8 @@ var schema = mongoose.Schema({
 	accountId: { type: types.ObjectId, ref: "accounts" },
 	recordId: types.String,
 	recordType: types.String,
+	title: types.String,
+	figureNames: types.Mixed,
 	dateRecorded: types.Date
 });
 

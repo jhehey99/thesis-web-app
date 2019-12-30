@@ -10,19 +10,20 @@ function RecordViewModel() {
 	var recordId = getRecordId();
 	console.log(recordId);
 
-	self.figures = ko.observableArray([]);
 	self.figureUrls = ko.observableArray([]);
+	self.title = ko.observable();
 
 	$.getJSON(`/api/records/${recordId}`)
 		.done(function (record) {
+			record.figureNames = ["bos-ir", "bos-red"];
 			console.log("Get Record Data");
 			console.log(record);
-			record.figureNames = ["bos-ir", "bos-red"];
 
 			var mappedUrls = $.map(record.figureNames, function (figureName) {
 				return { figureUrl: ko.observable(`/records/${recordId}/figs?figureName=${figureName}`) };
 			});
 			self.figureUrls(mappedUrls);
+			self.title(record.title);
 		}).fail(function () {
 			console.error("Could not get record data");
 		});

@@ -44,7 +44,7 @@ function onRecordBosClicked(e) {
 			io.connect("/socket/process/bos").emit("process-bos", { recordId });
 		},
 		onFinish: function () {
-			postRecord("Blood Oxygen Saturation");
+			postRecord("bos");
 		}
 	});
 }

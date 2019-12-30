@@ -46,7 +46,7 @@ function onRecordArmClicked(e) {
 			io.connect("/socket/process/bparm").emit("process-bparm", { recordId });
 		},
 		onFinish: function () {
-			postRecord("Blood Pressure Arm");
+			postRecord("bparm");
 		}
 	});
 }
@@ -97,7 +97,7 @@ function onRecordLegClicked(e) {
 			io.connect("/socket/process/bpleg").emit("process-bpleg", { recordId });
 		},
 		onFinish: function () {
-			postRecord("Blood Pressure Leg");
+			postRecord("bpleg");
 		}
 	});
 }
