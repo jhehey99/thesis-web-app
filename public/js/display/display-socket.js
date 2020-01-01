@@ -1,4 +1,4 @@
-function display(url, graph, displayEvent, displayCount = 200, displayInterval = 500) {
+function display(url, graph, displayEvent, displayCount = 100, displayInterval = 500) {
 	var socket = io.connect(url);
 
 	Plotly.plot(graph, [{
@@ -13,7 +13,10 @@ function display(url, graph, displayEvent, displayCount = 200, displayInterval =
 	var values = [];
 
 	socket.on(displayEvent, function (data) {
-		times.push(data.time);
+		var time = new Date(data.time);
+		// var time = data.time;
+
+		times.push(time);
 		values.push(data.value);
 
 		while (times.length > displayCount) {

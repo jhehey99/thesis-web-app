@@ -20,8 +20,12 @@
 		<div class="row-100">
 			<div data-includeHTML="/public/html/navbar/navbar.html" id="navbar-container"></div>
 		</div>
+		<div class="row-100 w-50 mx-auto" style="margin-top: 6%;">
+			<div data-includeHTML="/public/html/records/search-record.html" id="search-container"></div>
+		</div>
+
 		<div id="records-pagination" class="row-100 w-50 mx-auto"
-			style="margin-top: 5%; margin-bottom: 3%; display: block;">
+			style="margin-top: 2%; margin-bottom: 3%; display: block;">
 			<div class="data-container">
 				<ul data-bind="foreach: records, visible: records().length > 0" style="list-style-type:none;">
 					<li class="mb-4">

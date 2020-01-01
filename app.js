@@ -55,7 +55,7 @@ var PyRunner = require("./lib/py/pyrunner");
 
 app.setSocket = function (io) {
 	/* Client Sockets for testing */
-	require("./lib/socket/test")(io);
+	// require("./lib/socket/test")(io);
 
 	io.on("connection", function (socket) {
 		console.log(`SocketIO - Connected socketId: ${socket.id}`);

@@ -3,6 +3,7 @@ import json
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.signal as signal
+from scipy.interpolate import interp1d
 
 
 figNum = 1
@@ -86,6 +87,20 @@ if len(sys.argv) > 1:
         irValues = np.array(irValues[countDiffHalf:irCount - countDiffHalf])
         irCount = min(len(irTimes), len(irValues))
         # TODO: What if baliktad, redCount > irCount
+
+    # Interpolate signal
+    interpolationCount = 500
+    irInterpolation = interp1d(irTimes, irValues)
+    irTimes = np.linspace(irTimes[0], irTimes[-1], num=interpolationCount)
+    irValues = irInterpolation(irTimes)
+    print(
+        f"Interpolate - IR Signal from {irCount} to {interpolationCount} Data Points")
+
+    redInterpolation = interp1d(redTimes, redValues)
+    redTimes = np.linspace(redTimes[0], redTimes[-1], num=interpolationCount)
+    redValues = redInterpolation(redTimes)
+    print(
+        f"Interpolate - Red Signal from {redCount} to {interpolationCount} Data Points")
 
     print(
         f"Preprocessing - KeyTime: {keyTime}, KeyIndex: {keyIndex}, RedCount: {redCount}, IRCount: {irCount}")

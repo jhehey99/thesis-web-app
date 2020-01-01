@@ -1,0 +1,47 @@
+<div>
+	<style>
+		.query-container,
+		.search-params-container,
+		.result-container {
+			width: 90%;
+			display: block;
+			margin-right: auto;
+			margin-left: auto;
+			text-align: center;
+		}
+		.input-group input[type="search"] {
+			font-size: 120%;
+		}
+	</style>
+
+	<div class="query-container">
+		 <div class="input-group">
+			<input id="query" name="query" class="form-control mr-sm-2" type="search" placeholder="Search" autofocus="on" autocomplete="off">
+			<button id="search" class="btn btn-primary my-2 my-sm-0 mr-2" style="width: 15%" type="button" >Search</button>
+			<button id="viewAll" class="btn btn-primary my-2 my-sm-0" style="width: 15%" type="button" >View All</button>
+		 </div>
+	</div>
+	<div class="search-params-container mt-3">
+		<div id="param" class="form-group params">
+			<label class="mr-5" style="font-size: 120%;">Search By: </label>
+			<div class="custom-radio form-check form-check-inline mr-4">
+				<input type="radio" id="recordId" name="by" class="custom-control-input ml-5" value="recordId" checked="">
+				<label class="custom-control-label mr-2" for="recordId">Record ID</label>
+			</div>
+			<div class="custom-radio form-check form-check-inline mr-4">
+				<input type="radio" id="username" name="by" class="custom-control-input ml-2" value="username">
+				<label class="custom-control-label mr-2" for="username">Username</label>
+			</div>
+			<div class="custom-radio form-check form-check-inline mr-4">
+				<input type="radio" id="name" name="by" class="custom-control-input ml-2" value="name">
+				<label class="custom-control-label mr-2" for="name">Name</label>
+			</div>
+		</div>
+	</div>
+	<div class="result-container">
+		<h5>Showing results for: <span id="results">All</span></h5>
+	</div>
+
+	<script src="/public/js/records/search-record.js"></script>
+
+</div>

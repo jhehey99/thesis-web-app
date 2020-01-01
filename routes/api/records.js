@@ -11,24 +11,42 @@ const Record = require("../../models/record");
 router.get("/", function (req, res) {
 	//TODO AUSIN UNG DISPLAY
 	console.log("Records GET - Get all records");
-
-	console.log("Records GET - query string");
 	console.log(req.query);
 
+	var searchQuery = req.query.query;
+	var searchParam = req.query.param;
 	var pageSize = parseInt(req.query.pageSize);
 	var pageNumber = parseInt(req.query.pageNumber);
 
-	Record.find()
-		.limit(pageSize)
-		.skip(pageSize * (pageNumber - 1))
-		.populate({ path: "accountId", select: "username name age" })
-		.exec(function (err, records) {
-			if (err) {
-				console.error(err);
-				return res.json(err);
-			}
-			return res.json(records);
+	var obj = {};
+	if (searchQuery != 'null' && searchParam != 'null') {
+		obj[searchParam] = searchQuery;
+	}
+
+	if (searchParam == "recordId" || searchParam == 'null') {
+		Record.find(obj)
+			.limit(pageSize)
+			.skip(pageSize * (pageNumber - 1))
+			.populate({ path: "accountId", select: "username name age" })
+			.exec(function (err, records) {
+				if (err) { console.error(err); return res.json(err); }
+				return res.json(records);
+			});
+	} else {
+		Account.find(obj).select("_id").exec(function (err, accounts) {
+			if (err) { console.error(err); return res.json(err); }
+			if (accounts.length <= 0) { return res.json([]); }
+
+			Record.find({ accountId: { $in: accounts } })
+				.limit(pageSize)
+				.skip(pageSize * (pageNumber - 1))
+				.populate({ path: "accountId", select: "username name age" })
+				.exec(function (err, records) {
+					if (err) { console.error(err); return res.json(err); }
+					return res.json(records);
+				});
 		});
+	}
 });
 
 /**
@@ -64,19 +82,36 @@ router.get("/etc/latest", function (req, res) {
  */
 router.get("/etc/count", function (req, res) {
 	console.log("Records GET - Get total count of records");
-	Record.countDocuments().exec(function (err, count) {
-		if (err) { console.error(err); return res.json({ count: 0 }); }
-		return res.json(count);
-	});
-});
 
-// find records with given account id
-// Record.find({ accountId: "5dc585082938ce3348753809" })
-// 	.populate({ path: "accountId", select: "name age" })
-// 	.exec(function (err, records) {
-// 		if (err) return console.error(err);
-// 		res.json(records);
-// 	});
+	var searchQuery = req.query.query;
+	var searchParam = req.query.param;
+
+	var obj = {};
+	if (searchQuery != 'null' && searchParam != 'null') {
+		obj[searchParam] = searchQuery;
+	}
+
+	if (searchParam == "recordId" || searchParam == 'null') {
+		Record.find(obj)
+			.countDocuments()
+			.exec(function (err, count) {
+				if (err) { console.error(err); return res.json({ count: 0 }); }
+				return res.json(count);
+			});
+	} else {
+		Account.find(obj).select("_id").exec(function (err, accounts) {
+			if (err) { console.error(err); return res.json(err); }
+			if (accounts.length <= 0) { return res.json([]); }
+
+			Record.find({ accountId: { $in: accounts } })
+				.countDocuments()
+				.exec(function (err, count) {
+					if (err) { console.error(err); return res.json({ count: 0 }); }
+					return res.json(count);
+				});
+		});
+	}
+});
 
 /**
  * Get a new and unique record id
