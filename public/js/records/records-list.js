@@ -35,6 +35,10 @@ function RecordListViewModel() {
 						item.recordUrl = `/records/${item.recordId}`;
 						return ko.mapping.fromJS(item);
 					});
+					mappedRecords = $.map(records, function (item) {
+						item.deleteUrl = `/records/delete/${item.recordId}`;
+						return ko.mapping.fromJS(item);
+					});
 					console.log(mappedRecords);
 					self.records(mappedRecords);
 					localStorage.removeItem("searchQuery");

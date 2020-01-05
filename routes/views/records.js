@@ -20,15 +20,19 @@ router.get("/:recordId", function (req, res) {
 /**
  * Send the figures given the recordId as param and figureName as query string
  */
-router.get("/:recordId/figs", function (req, res) {
+router.get("/:recordId/results", function (req, res) {
 	var recordId = req.params.recordId;
 	var figureName = req.query.figureName;
 
-	const figuresPath = path.resolve(__dirname, `../../tmp/py_figs/${recordId}/${figureName}.svg`);
+	const figuresPath = path.resolve(__dirname, `../../tmp/py_results/${recordId}/${figureName}.svg`);
 	console.log(`Records GET - recordId: ${recordId}, figureName: ${figureName}`);
 	console.log(figuresPath);
 
 	res.sendFile(figuresPath);
+});
+
+router.get("/delete/:recordId", function (req, res) {
+	res.html("records/delete-record");
 });
 
 module.exports = router;

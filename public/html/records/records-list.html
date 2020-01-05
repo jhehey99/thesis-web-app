@@ -31,7 +31,10 @@
 					<li class="mb-4">
 						<div class="card mr-5 ">
 							<div class="card-header">
-								<h5 data-bind="text: title"></span></h5>
+								<h5 style="display:inline">[</h5>
+								<h5 data-bind="text: $index()+1" style="display:inline"></h5>
+								<h5 style="display:inline">]</h5>
+								<h5 data-bind="text: title" style="display:inline"></h5>
 							</div>
 							<div class="card-body">
 								<h5 class="card-title">ID: <span data-bind="text: recordId"></span></h5>
@@ -40,6 +43,7 @@
 								<h6 class="card-text">Age: <span data-bind="text: accountId.age"></span></h6>
 								<h6 class="card-text">Date Recorded: <span data-bind="text: dateRecorded"></span></h6>
 								<a data-bind="attr: { 'href': recordUrl }" class="btn btn-primary float-right">View Record</a>
+								<a style="margin-right: 2%;" data-bind="attr: { 'href': deleteUrl }" class="btn btn-danger float-right">Delete Record</a>
 							</div>
 						</div>
 					</li>

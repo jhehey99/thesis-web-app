@@ -15,12 +15,12 @@ function RecordViewModel() {
 
 	$.getJSON(`/api/records/${recordId}`)
 		.done(function (record) {
-			record.figureNames = ["bos-ir", "bos-red"];
+			// record.figureNames = ["bos-ir", "bos-red"];
 			console.log("Get Record Data");
 			console.log(record);
 
 			var mappedUrls = $.map(record.figureNames, function (figureName) {
-				return { figureUrl: ko.observable(`/records/${recordId}/figs?figureName=${figureName}`) };
+				return { figureUrl: ko.observable(`/records/${recordId}/results?figureName=${figureName}`) };
 			});
 			self.figureUrls(mappedUrls);
 			self.title(record.title);

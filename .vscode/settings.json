@@ -14,5 +14,7 @@
 	"[python]": {
 		"editor.insertSpaces": true,
 		"editor.tabSize": 4
-	}
+	},
+	"editor.wordWrapColumn": 500,
+	"html.format.wrapLineLength": 0
 }

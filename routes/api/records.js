@@ -63,6 +63,19 @@ router.get("/:recordId(\\w+)/", function (req, res) {
 		});
 });
 
+
+/**
+ * Delete Record given the recordId as parameter
+ */
+router.post("/delete/:recordId(\\w+)/", function (req, res) {
+	var recordId = req.params.recordId;
+	console.log(`Records DELETE - Delete record by recordId: ${recordId}`);
+	Record.deleteOne({ recordId: recordId }, function (err) {
+		if (err) { console.error(err); return res.json(err); }
+		return res.json({ success: true, message: "Record Deleted" });
+	});
+});
+
 /**
  * Get latest record data
  */

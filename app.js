@@ -16,8 +16,9 @@ app.use("/public", express.static(path.join(__dirname, "public")));
 /**
  * Database connection
  */
+const mongooseConfig = require("./config/mongoose");
 const connection = require("./lib/mongoose/connection");
-connection.connect();
+connection.connect(mongooseConfig);
 
 /**
  * My middlewares
@@ -33,25 +34,30 @@ app.use("/bos", require("./routes/views/bos"));
 app.use("/records", require("./routes/views/records"));
 app.use("/api/accounts", require("./routes/api/accounts"));
 app.use("/api/records", require("./routes/api/records"));
+app.use("/dev", require("./dev/dev"));
 
 /**
  * Place socket declarations here
  */
 /* Data Sockets */
 const dataSocketConfig = require("./config/datasocket");
-var DataSocket = require("./lib/socket/datasocket");
+const DataSocket = require("./lib/socket/datasocket");
+
+/* Ir and Red Transition Socket */
+const ledTransitionSocketConfig = require("./config/ledtransitionsocket");
+const LedTransitionSocket = require("./lib/socket/ledtransitionsocket");
 
 /* Device Socket */
 const deviceSocketConfig = require("./config/devicesocket");
-var DeviceSocket = require("./lib/socket/devicesocket");
+const DeviceSocket = require("./lib/socket/devicesocket");
 
 /* Process Sockets */
 const processSocketConfig = require("./config/processsocket");
-var ProcessSocket = require("./lib/socket/processsocket");
+const ProcessSocket = require("./lib/socket/processsocket");
 
 /* Python Config */
 const pyConfig = require("./config/pyrunner");
-var PyRunner = require("./lib/py/pyrunner");
+const PyRunner = require("./lib/py/pyrunner");
 
 app.setSocket = function (io) {
 	/* Client Sockets for testing */
@@ -62,23 +68,26 @@ app.setSocket = function (io) {
 	});
 
 	/* Data Sockets */
-	var ecgSocket = new DataSocket(io, dataSocketConfig.ecg);
-	var ppgarmirSocket = new DataSocket(io, dataSocketConfig.ppgarmir);
-	var ppgarmredSocket = new DataSocket(io, dataSocketConfig.ppgarmred);
-	var ppglegSocket = new DataSocket(io, dataSocketConfig.ppgleg);
+	const ecgSocket = new DataSocket(io, dataSocketConfig.ecg);
+	const ppgarmirSocket = new DataSocket(io, dataSocketConfig.ppgarmir);
+	const ppgarmredSocket = new DataSocket(io, dataSocketConfig.ppgarmred);
+	const ppglegSocket = new DataSocket(io, dataSocketConfig.ppgleg);
+
+	/* Ir and Red Transition Socket */
+	const transitionSocket = new LedTransitionSocket(io, ledTransitionSocketConfig, dataSocketConfig.ppgarmir, dataSocketConfig.ppgarmred);
 
 	/* Device Socket */
-	var deviceSocket = new DeviceSocket(io, deviceSocketConfig);
+	const deviceSocket = new DeviceSocket(io, deviceSocketConfig);
 
 	/* Python Process Runners */
-	var bparmPyRunner = new PyRunner(pyConfig.bparm);
-	var bplegPyRunner = new PyRunner(pyConfig.bpleg);
-	var bosPyRunner = new PyRunner(pyConfig.bos);
+	const bparmPyRunner = new PyRunner(pyConfig.bparm);
+	const bplegPyRunner = new PyRunner(pyConfig.bpleg);
+	const bosPyRunner = new PyRunner(pyConfig.bos);
 
 	/* Process Sockets */
-	var bparmSocket = new ProcessSocket(io, processSocketConfig.bparm, bparmPyRunner);
-	var bplegSocket = new ProcessSocket(io, processSocketConfig.bpleg, bplegPyRunner);
-	var bosSocket = new ProcessSocket(io, processSocketConfig.bos, bosPyRunner);
+	const bparmSocket = new ProcessSocket(io, processSocketConfig.bparm, bparmPyRunner);
+	const bplegSocket = new ProcessSocket(io, processSocketConfig.bpleg, bplegPyRunner);
+	const bosSocket = new ProcessSocket(io, processSocketConfig.bos, bosPyRunner);
 };
 
 module.exports = app;

@@ -1,5 +1,6 @@
 import sys
 import json
+import math
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.signal as signal
@@ -39,11 +40,16 @@ if len(sys.argv) > 1:
     print("Py Process - BOS - Node")
     print("--------------------------------------------------")
 
-    # parse arguments
+    # Parse Config Arguments
     config = json.loads(sys.argv[1])
-    dataPath = config["dataPath"]
+    title = config['title']
+    rawDataPath = config["rawDataPath"]
+    dataFiles = config['dataFiles']
+    pyResultsPath = config['pyResultsPath']
+    figureNames = config['figureNames']
+    figureType = config['figureType']
 
-    print(f"Config - DataPath: {dataPath}")
+    print(f"Config - DataPath: {rawDataPath}")
     for key, val in config.items():
         print(f"Config - {key}: {val}")
 
@@ -51,11 +57,11 @@ if len(sys.argv) > 1:
     # Read input data
     IR, RED = 0, 1
     print("Read - PPG Arm IR")
-    irPath = f"{dataPath}/{config['dataFiles'][IR]}"
+    irPath = f"{rawDataPath}/{dataFiles[IR]}"
     irCount, irTimes, irValues = readTimeValuePairs(irPath)
     print(f"Read - PPG Arm IR - Count: {irCount}")
     print("Read - PPG Arm Red")
-    redPath = f"{dataPath}/{config['dataFiles'][RED]}"
+    redPath = f"{rawDataPath}/{dataFiles[RED]}"
     redCount, redTimes, redValues = readTimeValuePairs(redPath)
     print(f"Read - PPG Arm Red - Count: {redCount}")
 
@@ -89,30 +95,28 @@ if len(sys.argv) > 1:
         # TODO: What if baliktad, redCount > irCount
 
     # Interpolate signal
-    interpolationCount = 500
+    interpolationMultiplier = 1000
+    irInterpolationCount = math.ceil(irCount / interpolationMultiplier) * interpolationMultiplier
     irInterpolation = interp1d(irTimes, irValues)
-    irTimes = np.linspace(irTimes[0], irTimes[-1], num=interpolationCount)
+    irTimes = np.linspace(irTimes[0], irTimes[-1], num=irInterpolationCount)
     irValues = irInterpolation(irTimes)
-    print(
-        f"Interpolate - IR Signal from {irCount} to {interpolationCount} Data Points")
+    print(f"Interpolate - IR Signal from {irCount} to {irInterpolationCount} Data Points")
 
+    redInterpolationCount = math.ceil(redCount / interpolationMultiplier) * interpolationMultiplier
     redInterpolation = interp1d(redTimes, redValues)
-    redTimes = np.linspace(redTimes[0], redTimes[-1], num=interpolationCount)
+    redTimes = np.linspace(redTimes[0], redTimes[-1], num=redInterpolationCount)
     redValues = redInterpolation(redTimes)
-    print(
-        f"Interpolate - Red Signal from {redCount} to {interpolationCount} Data Points")
+    print(f"Interpolate - Red Signal from {redCount} to {redInterpolationCount} Data Points")
 
-    print(
-        f"Preprocessing - KeyTime: {keyTime}, KeyIndex: {keyIndex}, RedCount: {redCount}, IRCount: {irCount}")
+    print(f"Preprocessing - KeyTime: {keyTime}, KeyIndex: {keyIndex}, RedCount: {redCount}, IRCount: {irCount}")
 
     print("--------------------------------------------------")
     # Processing
-    print(f"Processing - {config['title']}")
+    print(f"Processing - {title}")
     figures = []
     AC, DC = 0, 1
     irComponents, redComponents = [], []
-    inputData = np.array([[irCount, irTimes, irValues],
-                          [redCount, redTimes, redValues]])
+    inputData = np.array([[irCount, irTimes, irValues], [redCount, redTimes, redValues]])
 
     for inputIndex, data in enumerate(inputData):
         dataName = "IR" if inputIndex == 0 else "RED"
@@ -141,16 +145,16 @@ if len(sys.argv) > 1:
 
         # Low Pass Filter
         lpSos = signal.butter(10, 5, 'lowpass', fs=Fs, output='sos')
-        lpVal = np.round(signal.sosfiltfilt(
-            lpSos, inputValue), 4)  # zero-phase
-        filteredValue = lpVal
+        filteredValue = np.round(signal.sosfiltfilt(lpSos, inputValue), 4)  # zero-phase
+        minValue, maxValue = 0.0001, 1024
+        filteredValue = (filteredValue - minValue) / (maxValue - minValue)
 
         # Plot Filtered Signal
         print("Plotting - Filtered Signal")
         plt.subplot(subplotLoc)
         subplotLoc += 1
         plt.title("Pre-processed Signal")
-        plt.ylabel("ADC Value")
+        plt.ylabel("Normalized Value")
         plt.xlabel("Time (ms)")
         plt.plot(inputTime, filteredValue)
         plt.ticklabel_format(style='sci', axis='x', scilimits=(0, 0))
@@ -165,10 +169,8 @@ if len(sys.argv) > 1:
         # AC Component Finding
         print("Processing - AC Component Finding")
         promAveHalf = np.average(prominences) / 2
-        acPoints = [peaks[i] for i, prominence in enumerate(
-            prominences) if prominence > promAveHalf]
-        acComponents = [
-            prominence for prominence in prominences if prominence > promAveHalf]
+        acPoints = [peaks[i] for i, prominence in enumerate(prominences) if prominence > promAveHalf]
+        acComponents = [prominence for prominence in prominences if prominence > promAveHalf]
 
         # ------------------------------------------------------------------
         # DC Component Finding
@@ -190,21 +192,38 @@ if len(sys.argv) > 1:
         # AC - DC Component Matching
         print("Processing - AC - DC Component Matching")
         referencePoint = dcPoints[0]
+        startTime = inputTime[referencePoint]
+        endTime = startTime
+        for t in inputTime[referencePoint:]:
+            if startTime + 6000 <= endTime:
+                break
+            endTime = t
 
         print("Processing - Get ac points after the first dc point on the left")
+
+        # First dc point must be after the start time
+        firstDc = dcPoints[0]
+        for p in dcPoints:
+            if inputTime[firstDc] >= startTime:
+                break
+            firstDc = p
+
         finalAcPoints, finalAcComponents = [], []
         if len(dcPoints) > 0:
-            firstDc = dcPoints[0]
             # Get indices of AC Points after the first DC Point
-            acIndices = [i for i in range(
-                len(acPoints)) if acPoints[i] > firstDc]
+            acIndices = [i for i in range(len(acPoints)) if acPoints[i] > firstDc]
             finalAcPoints = [acPoints[i] for i in acIndices]
             finalAcComponents = [round(acComponents[i], 4) for i in acIndices]
 
         print("Processing - Get dc points before the last ac point on the right")
+        lastAc = finalAcPoints[-1]
+        for p in reversed(acPoints):
+            if inputTime[lastAc] < endTime:
+                break
+            lastAc = p
+
         finalDcPoints = []
         if len(finalAcPoints) > 1:
-            lastAc = finalAcPoints[-1]
             finalDcPoints = [dcp for dcp in dcPoints if dcp < lastAc]
 
         # ------------------------------------------------------------------
@@ -228,11 +247,15 @@ if len(sys.argv) > 1:
         plt.subplot(subplotLoc)
         subplotLoc += 1
         plt.title("AC Components")
+        plt.ylabel("Normalized Value")
+        plt.xlabel("Time (ms)")
         plt.plot(inputTime, filteredValue)
         plt.plot(finalAcTimes, finalAcValues, 'x', color='g')
         plt.plot(finalAcTimes, finalAcMin, 'x', color='r')
         plt.vlines(x=finalAcTimes, ymin=finalAcMin, ymax=finalAcValues)
         plt.ticklabel_format(style='sci', axis='x', scilimits=(0, 0))
+        plt.axvline(startTime, linestyle='--', color='green')
+        plt.axvline(endTime, linestyle='--', color='green')
 
         # ------------------------------------------------------------------
         # Plot DC Components
@@ -240,16 +263,20 @@ if len(sys.argv) > 1:
         plt.subplot(subplotLoc)
         subplotLoc += 1
         plt.title("DC Components")
+        plt.ylabel("Normalized Value")
+        plt.xlabel("Time (ms)")
         plt.plot(inputTime, filteredValue)
         plt.plot(finalDcTimes, finalDcComponents, 'x', color='r')
         plt.ticklabel_format(style='sci', axis='x', scilimits=(0, 0))
+        plt.axvline(startTime, linestyle='--', color='green')
+        plt.axvline(endTime, linestyle='--', color='green')
         plt.tight_layout()
 
         # ------------------------------------------------------------------
         # Saving Figure
         # TODO: Get figure filename from the config
-        figureFilename = f"{config['figuresPath']}/{config['figureNames'][inputIndex]}.{config['figureType']}"
-        print(f"Figure - Saving - {figureFilename}")
+        figureFilename = f"{pyResultsPath}/{figureNames[inputIndex]}.{figureType}"
+        print(f"Saving Figure - {figureFilename}")
         plt.tight_layout
         plt.savefig(figureFilename, format="svg", bbox_inches='tight')
 
@@ -262,19 +289,19 @@ if len(sys.argv) > 1:
     irAcAve = np.round(np.average(irComponents[AC]), 4)
     irDcAve = np.round(np.average(irComponents[DC]), 4)
     irRatio = np.round(irAcAve / irDcAve, 4)
-    print(
-        f"Properties - IR Average - AC: {irAcAve}, DC: {irDcAve}, Ratio: {irRatio}")
+    print(f"Properties - IR Average - AC: {irAcAve}, DC: {irDcAve}, Ratio: {irRatio}")
 
     # Get Red Ratio
     redAcAve = np.round(np.average(redComponents[AC]), 4)
     redDcAve = np.round(np.average(redComponents[DC]), 4)
     redRatio = np.round(redAcAve / redDcAve, 4)
-    print(
-        f"Properties - Red Average - AC: {redAcAve}, DC: {redDcAve}, Ratio: {redRatio}")
+    print(f"Properties - Red Average - AC: {redAcAve}, DC: {redDcAve}, Ratio: {redRatio}")
 
     # Get IR / Red Ratio
     irRedRatio = np.round(irRatio / redRatio, 4)
     print(f"Properties - IR/Red Ratio: {irRedRatio}")
+
+    # TODO: Save the properties to a file
 
 
 print("\n##################################################\n")

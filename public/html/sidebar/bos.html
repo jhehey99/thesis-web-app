@@ -37,8 +37,8 @@
 
 				<div id="record-container">
 					<div class="ml-4 mr-4 mb-4">
-						<label class="h6" for="duration">Duration (seconds)</label>
-						<input class="form-control" type="number" id="duration" name="duration" value="5">
+						<label class="h6" for="duration">Duration for each signal (seconds)</label>
+						<input class="form-control" type="number" id="duration" name="duration" value="8">
 					</div>
 
 					<div id="recording-finished" class="mb-4" style="text-align: center; color: greenyellow;">
@@ -53,10 +53,40 @@
 			</div>
 
 			<div id="recording-container" class="ml-4 mr-4 mt-2" style="text-align: center;">
+				<div id="ir-container">
+					<div id="ir-waiting">
+						<h6 style="color: crimson;">Waiting for PPG IR to be Active</h6>
+					</div>
+					<div id="ir-recording">
+						<h6>Recording PPG IR Signal</h6>
+						<h6>Time Left:</h6>
+						<label class="h5" id="ir-timeLeft"></label>
+					</div>
+					<div id="ir-finished">
+						<h6 style="color: greenyellow;">Finished Recording PPG IR</h6>
+					</div>
+				</div>
+
+				<div id="red-container">
+					<div id="red-waiting">
+						<h6 style="color: crimson;">Waiting for PPG Red to be Active</h6>
+					</div>
+					<div id="red-recording">
+						<h6>Recording PPG Red Signal</h6>
+						<h6>Time Left:</h6>
+						<label class="h5" id="red-timeLeft"></label>
+					</div>
+					<div id="red-finished">
+						<h6 style="color: greenyellow;">Finished Recording PPG Red</h6>
+					</div>
+				</div>
+			</div>
+
+			<!-- <div id="recording-container" class="ml-4 mr-4 mt-2" style="text-align: center;">
 				<h6>Recording Started</h6>
 				<h6>Time Left: </h6>
 				<label class="h5" id="timeLeft"></label>
-			</div>
+			</div> -->
 		</form>
 	</div>
 
@@ -66,6 +96,4 @@
 	<script src="/public/js/sidebar/bos.js"></script>
 	<script src="/public/js/sidebar/info.js"></script>
 	<script src="/public/js/sidebar/record.js"></script>
-	<script src="/public/js/sidebar/recorder.js"></script>
-
 </div>

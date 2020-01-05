@@ -1,3 +1,43 @@
+function startBpRecorder(config) {
+	var recordId = config.recordId;
+	var duration = parseInt(config.duration);
+
+	if (duration > 0) {
+		// call the onStart callback
+		config.onStart();
+
+		// update the duration text
+		var timeLeft = $(document.getElementById("timeLeft"));
+		timeLeft.text(duration + "s");
+
+		var updateInterval = setInterval(() => {
+			// update duration
+			duration--;
+			timeLeft.text(duration + "s");
+
+			// check if finished
+			if (duration <= 0) {
+				setTimeout(() => {
+
+					// stop recording then process the data recorded
+					config.onStop();
+					config.onProcess();
+
+					showElement("recording-container", false);
+					showElement("recording-finished", true);
+					showElement("recording-button", false);
+					showElement("record-container", true);
+
+					// to avoid duplicate recording intervals
+					clearInterval(updateInterval);
+
+					config.onFinish();
+				}, 100);
+			}
+		}, 1000);
+	}
+}
+
 function onRecordArmClicked(e) {
 	e.preventDefault();
 	console.log("record arm");
@@ -14,10 +54,11 @@ function onRecordArmClicked(e) {
 	var ecg = io.connect("/socket/ecg");
 	var ppgarmir = io.connect("/socket/ppgarm-ir");
 
-	startRecorder({
+	startBpRecorder({
 		recordId,
 		duration,
 		onStart: function () {
+			console.log("Record Bos onStart");
 			ecg.emit("record-ecg", {
 				startRecording: true,
 				recordId
@@ -28,24 +69,25 @@ function onRecordArmClicked(e) {
 			});
 		},
 		onStop: function () {
+			console.log("Record Bos onStop");
 			ecg.emit("record-ecg", {
 				stopRecording: true,
 				recordId
 			});
 			ecg.close();
-			console.log("ecg stopped");
 
 			ppgarmir.emit("record-ppgarm-ir", {
 				stopRecording: true,
 				recordId
 			});
 			ppgarmir.close();
-			console.log("ppgarmir stopped");
 		},
 		onProcess: function () {
+			console.log("Record Bos onProcess");
 			io.connect("/socket/process/bparm").emit("process-bparm", { recordId });
 		},
 		onFinish: function () {
+			console.log("Record Bos onFinish");
 			postRecord("bparm");
 		}
 	});
@@ -67,10 +109,11 @@ function onRecordLegClicked(e) {
 	var ecg = io.connect("/socket/ecg");
 	var ppgleg = io.connect("/socket/ppgleg");
 
-	startRecorder({
+	startBpRecorder({
 		recordId,
 		duration,
 		onStart: function () {
+			console.log("Record Bos onStart");
 			ecg.emit("record-ecg", {
 				startRecording: true,
 				recordId
@@ -81,6 +124,7 @@ function onRecordLegClicked(e) {
 			});
 		},
 		onStop: function () {
+			console.log("Record Bos onStop");
 			ecg.emit("record-ecg", {
 				stopRecording: true,
 				recordId
@@ -94,9 +138,11 @@ function onRecordLegClicked(e) {
 			ppgleg.close();
 		},
 		onProcess: function () {
+			console.log("Record Bos onProcess");
 			io.connect("/socket/process/bpleg").emit("process-bpleg", { recordId });
 		},
 		onFinish: function () {
+			console.log("Record Bos onFinish");
 			postRecord("bpleg");
 		}
 	});
