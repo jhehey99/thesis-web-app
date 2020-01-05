@@ -58,9 +58,23 @@
 			</div>
 
 			<div id="recording-container" class="ml-4 mr-4 mt-2" style="text-align: center;">
-				<h6>Recording Started</h6>
-				<h6>Time Left: </h6>
-				<label class="h5" id="timeLeft"></label>
+				<div id="arm-container">
+					<div id="arm-waiting">
+						<h6 style="color: crimson;">Waiting for PPG IR to be Active</h6>
+					</div>
+					<div id="arm-recording">
+						<h6>Recording Started</h6>
+						<h6>Time Left:</h6>
+						<label class="h5" id="timeLeft"></label>
+					</div>
+				</div>
+				<div id="leg-container">
+					<div id="leg-recording">
+						<h6>Recording Started</h6>
+						<h6>Time Left:</h6>
+						<label class="h5" id="timeLeft"></label>
+					</div>
+				</div>
 			</div>
 		</form>
 	</div>

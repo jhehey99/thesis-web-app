@@ -110,8 +110,9 @@ function new_onRecordBosClicked(e) {
 
 	// start a new record
 	var recordId = $(document.getElementById("recordId")).val();
-	var irDuration = $(document.getElementById("duration")).val();
-	var redDuration = irDuration;
+	var duration = $(document.getElementById("duration")).val();
+	var irDuration = duration;
+	var redDuration = duration;
 
 	// declare sockets
 	var ppgarmir = io.connect("/socket/ppgarm-ir");
@@ -197,7 +198,7 @@ function new_onRecordBosClicked(e) {
 
 							// Time to process 2 signals
 							console.log("onProcess Bos Recording");
-							io.connect("/socket/process/bos").emit("process-bos", { recordId });
+							io.connect("/socket/process/bos").emit("process-bos", { recordId, duration });
 
 							// Finished Recording 2 signals
 							onFinishedRecording();

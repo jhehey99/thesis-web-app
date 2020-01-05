@@ -30,15 +30,15 @@ function RecordListViewModel() {
 				},
 				callback: function (records, pagination) {
 					console.log(`Paginated Records obtained - length: ${records.length}`);
-					totalNumber = records.length;
-					var mappedRecords = $.map(records, function (item) {
+					var mappedRecords = [];
+					for (var i = 0; i < records.length; i++) {
+						var item = records[i];
 						item.recordUrl = `/records/${item.recordId}`;
-						return ko.mapping.fromJS(item);
-					});
-					mappedRecords = $.map(records, function (item) {
 						item.deleteUrl = `/records/delete/${item.recordId}`;
-						return ko.mapping.fromJS(item);
-					});
+						item.index = i + 1 + ((pagination.pageNumber - 1) * pagination.pageSize);
+						mappedRecords.push(ko.mapping.fromJS(item));
+					}
+
 					console.log(mappedRecords);
 					self.records(mappedRecords);
 					localStorage.removeItem("searchQuery");

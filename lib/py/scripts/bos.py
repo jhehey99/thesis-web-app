@@ -48,6 +48,7 @@ if len(sys.argv) > 1:
     pyResultsPath = config['pyResultsPath']
     figureNames = config['figureNames']
     figureType = config['figureType']
+    duration = int(config['duration'])
 
     print(f"Config - DataPath: {rawDataPath}")
     for key, val in config.items():
@@ -95,7 +96,7 @@ if len(sys.argv) > 1:
         # TODO: What if baliktad, redCount > irCount
 
     # Interpolate signal
-    interpolationMultiplier = 1000
+    interpolationMultiplier = duration * 100
     irInterpolationCount = math.ceil(irCount / interpolationMultiplier) * interpolationMultiplier
     irInterpolation = interp1d(irTimes, irValues)
     irTimes = np.linspace(irTimes[0], irTimes[-1], num=irInterpolationCount)

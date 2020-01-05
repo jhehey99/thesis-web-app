@@ -48,6 +48,7 @@ if len(sys.argv) > 1:
     pyResultsPath = config['pyResultsPath']
     figureNames = config['figureNames']
     figureType = config['figureType']
+    duration = int(config['duration'])
 
     print(f"Config - DataPath: {rawDataPath}")
     for key, val in config.items():
@@ -68,7 +69,7 @@ if len(sys.argv) > 1:
 
     print("--------------------------------------------------")
     # Interpolate signal
-    interpolationMultiplier = 500
+    interpolationMultiplier = duration * 100
     ecgInterpolationCount = math.ceil(ecgCount / interpolationMultiplier) * interpolationMultiplier
     ecgInterpolation = interp1d(ecgTimes, ecgValues)
     ecgTimes = np.linspace(ecgTimes[0], ecgTimes[-1], num=ecgInterpolationCount)
