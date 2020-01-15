@@ -32,6 +32,7 @@ app.use("/", require("./routes/views/index"));
 app.use("/bp", require("./routes/views/bp"));
 app.use("/bos", require("./routes/views/bos"));
 app.use("/records", require("./routes/views/records"));
+app.use("/training", require("./routes/views/training"));
 app.use("/api/accounts", require("./routes/api/accounts"));
 app.use("/api/records", require("./routes/api/records"));
 app.use("/dev", require("./dev/dev"));

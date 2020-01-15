@@ -7,7 +7,8 @@ var schema = mongoose.Schema({
 	recordType: types.String,
 	title: types.String,
 	figureNames: types.Mixed,
-	dateRecorded: types.Date
+	dateRecorded: types.Date,
+	properties: types.Mixed
 });
 
 schema.set('toObject', { virtuals: true });

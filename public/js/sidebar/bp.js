@@ -7,7 +7,7 @@ function startBpRecorder(config) {
 		config.onStart();
 
 		// update the duration text
-		var timeLeft = $(document.getElementById("timeLeft"));
+		var timeLeft = $(document.getElementById(config.timeLeft));
 		timeLeft.text(duration + "s");
 
 		var updateInterval = setInterval(() => {
@@ -74,6 +74,7 @@ function onRecordArmClicked(e) {
 			startBpRecorder({
 				recordId,
 				duration,
+				timeLeft: "arm-timeLeft",
 				onStart: function () {
 					console.log("Record Bos onStart");
 					onActiveIr();
@@ -134,6 +135,7 @@ function onRecordLegClicked(e) {
 	startBpRecorder({
 		recordId,
 		duration,
+		timeLeft: "leg-timeLeft",
 		onStart: function () {
 			console.log("Record Bos onStart");
 			ecg.emit("record-ecg", {

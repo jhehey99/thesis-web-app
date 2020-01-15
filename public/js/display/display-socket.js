@@ -12,7 +12,6 @@ function display(url, graph, displayEvent, displayCount = 400) {
 
 	var updateGraph = function () {
 		Plotly.restyle(graph, { x: [times], y: [values] });
-		console.log(`Display - ${times.length}, ${values.length}`);
 	}
 
 	Plotly.plot(graph, [{

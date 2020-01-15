@@ -41,6 +41,7 @@ function RecordListViewModel() {
 
 					console.log(mappedRecords);
 					self.records(mappedRecords);
+					console.log(self.records);
 					localStorage.removeItem("searchQuery");
 					localStorage.removeItem("searchParam");
 				}

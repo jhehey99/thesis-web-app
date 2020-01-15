@@ -20,7 +20,7 @@ router.get("/", function (req, res) {
 
 	var obj = {};
 	if (searchQuery != 'null' && searchParam != 'null') {
-		obj[searchParam] = searchQuery;
+		obj[searchParam] = { $regex: '.*' + searchQuery + '.*' };
 	}
 
 	if (searchParam == "recordId" || searchParam == 'null') {
@@ -47,6 +47,20 @@ router.get("/", function (req, res) {
 				});
 		});
 	}
+});
+
+/**
+ * Get All Records based on Record Type
+ */
+router.get("/type/:recordType", function (req, res) {
+	var recordType = req.params.recordType;
+	console.log(`Records GET - Get records by recordType: ${recordType}`);
+	Record.find({ recordType: recordType })
+		.populate({ path: "accountId", select: "username name" })
+		.exec(function (err, records) {
+			if (err) { console.error(err); return res.json(err); }
+			return res.json(records);
+		});
 });
 
 /**

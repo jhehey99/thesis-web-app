@@ -24,6 +24,7 @@ function RecordViewModel() {
 			});
 			self.figureUrls(mappedUrls);
 			self.title(record.title);
+			console.log(recordId);
 		}).fail(function () {
 			console.error("Could not get record data");
 		});
