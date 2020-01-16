@@ -10,8 +10,14 @@ function TrainingRecordListViewModel(recordType = "bos") {
 			for (var i = 0; i < records.length; i++) {
 				var item = records[i];
 				item.index = i + 1;
+				// Bos
+				item.ratioId = `${recordType}-ratio-${item.index}`;
 				item.spo2Id = `${recordType}-spo2-${item.index}`;
+
+				// Bp
+				item.pttId = `${recordType}-ptt-${item.index}`;
 				item.sbpId = `${recordType}-sbp-${item.index}`;
+				item.rpdptId = `${recordType}-rpdpt-${item.index}`;
 				item.dbpId = `${recordType}-dbp-${item.index}`;
 				item.selectId = `${recordType}-select-${item.index}`;
 				item.username = item.accountId.username;
@@ -126,6 +132,7 @@ $(function () {
 	}
 });
 
+// when a new recordType is selected from the radio buttons
 $(function () {
 	// set new record type
 	var radio = $("input:radio[name=recordType]");
@@ -137,6 +144,7 @@ $(function () {
 	});
 });
 
+// Set the recordType at initial load
 $(function () {
 	var recordType = window.localStorage.getItem("recordType");
 	if (!recordType) recordType = "bos";
@@ -147,6 +155,7 @@ $(function () {
 	ko.applyBindings(TrainingRecordListViewModel(recordType));
 });
 
+// Start Training is clicked
 $(function () {
 	var train = $("#start-training");
 	train.on("click", function (e) {
@@ -154,23 +163,38 @@ $(function () {
 		console.log("Start Training");
 
 		var recordType = window.localStorage.getItem("recordType");
-		// console.log($('.train-check:checkbox:checked'));
+		var recordsLength = window.localStorage.getItem("recordsLength");
 
-		var recordIds = [];
+		trainingData = { recordType, values: [] }
+
 		$('.train-check:checkbox:checked').each(function () {
 			if (this.checked) {
-				recordIds.push($(this).val());
+				// get index from last digit of the id
+				var splitted = this.id.split("-");
+				var i = splitted[splitted.length - 1];
+
+				// get the needed parameters depending on the record type
+				if (recordType == "bos") {
+					var ratio = parseFloat($(`#bos-ratio-${i}`).text());
+					var spo2 = parseFloat($(`#bos-spo2-${i}`).val());
+					trainingData.values.push({ ratio, spo2 });
+				} else {
+					var ptt = parseFloat($(`#${recordType}-ptt-${i}`).text());
+					var sbp = parseFloat($(`#${recordType}-sbp-${i}`).val());
+					var rpdpt = parseFloat($(`#${recordType}-rpdpt-${i}`).text());
+					var dbp = parseFloat($(`#${recordType}-dbp-${i}`).val());
+					trainingData.values.push({ ptt, sbp, rpdpt, dbp });
+				}
 			}
 		});
-
-		console.log(recordIds);
+		console.log(trainingData);
 
 		$.ajax({
 			url: "/training/train",
 			type: "post",
 			dataType: "json",
 			contentType: "application/json; charset=utf-8",
-			data: JSON.stringify({ recordIds })
+			data: JSON.stringify(trainingData)
 		}).done(function (data, status) {
 			console.log(data.message, status);
 		}).fail(function (jqxhr, status) {

@@ -6,11 +6,9 @@ router.get("/", function (req, res) {
 });
 
 router.post("/train", function (req, res) {
-	var recordIds = req.body.recordIds;
 	console.log(`Training POST - Train`);
-	console.log(recordIds);
+	console.log(req.body);
 	res.json("ok");
-	// TODO: Record Ids ba o ung Property na
-})
+});
 
 module.exports = router

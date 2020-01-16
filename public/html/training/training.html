@@ -15,7 +15,7 @@
 
 <body>
 
-	<div class="contaier-fluid" >
+	<div class="contaier-fluid">
 		<div class="row-100">
 			<div data-includeHTML="public/html/navbar/navbar.html" id="navbar-container"></div>
 		</div>
@@ -82,17 +82,17 @@
 								<!-- <td data-bind="text: property">Null</td> -->
 
 								<!-- Blood Oxygen Saturation -->
-								<td data-bind="if: typeBos"><span data-bind="text: ratio">Null</span></td>
+								<td data-bind="if: typeBos"><span data-bind="attr: { 'id': ratioId }, text: ratio">Null</span></td>
 								<td data-bind="if: typeBos">
 									<input data-bind="attr: { 'id': spo2Id }" class="form-control w-50" type="number" style="margin-left: auto; margin-right: auto; text-align: center;">
 								</td>
 
 								<!-- Blood Pressure -->
-								<td data-bind="if: typeBp"><span data-bind="text: ptt">Null</span></td >
+								<td data-bind="if: typeBp"><span data-bind="attr: { 'id': pttId }, text: ptt">Null</span></td>
 								<td data-bind="if: typeBp">
 									<input data-bind="attr: { 'id': sbpId }" class="form-control w-50" type="number" style="margin-left: auto; margin-right: auto; text-align: center;">
 								</td>
-								<td data-bind="if: typeBp"><span data-bind="text: rpdpt">Null</span></td>
+								<td data-bind="if: typeBp"><span data-bind="attr: { 'id': rpdptId }, text: rpdpt">Null</span></td>
 								<td data-bind="if: typeBp">
 									<input data-bind="attr: { 'id': dbpId }" class="form-control w-50" type="number" style="margin-left: auto; margin-right: auto; text-align: center;">
 								</td>
@@ -106,7 +106,7 @@
 							</div>
 						</tr>
 					</tbody>
-				 </table>
+				</table>
 			</div>
 		</div>
 	</div>
