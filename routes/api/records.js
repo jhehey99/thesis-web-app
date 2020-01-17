@@ -100,6 +100,7 @@ router.get("/etc/latest", function (req, res) {
 		.populate({ path: "accountId", select: "username name age" })
 		.exec(function (err, record) {
 			if (err) { console.error(err); return res.json(err); }
+			if (record == null) { return res.json("No Records Available"); }
 			return res.redirect(`/records/${record.recordId}`);
 		});
 });

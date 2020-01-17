@@ -15,6 +15,7 @@ install mo ung nasa requirements.txt
 (thesis-env) > pip install numpy
 (thesis-env) > pip install matplotlib
 (thesis-env) > pip install scipy
+(thesis-env) > pip install scikit-learn
 
 
 

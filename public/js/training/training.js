@@ -27,10 +27,19 @@ function TrainingRecordListViewModel(recordType = "bos") {
 
 				// TODO: Test tong properties and get from server ung data
 				if (recordType == "bos") {
-					item.ratio = 1;
+					if (item.properties) {
+						item.ratio = item.properties.ratio// Math.floor(Math.random() * 100);
+					} else {
+						item.ratio = null;
+					}
 				} else {
-					item.ptt = 2;
-					item.rpdpt = 3;
+					if (item.properties) {
+						item.ptt = item.properties.ptt; // Math.floor(Math.random() * 100);
+						item.rpdpt = item.properties.rpdpt; // Math.floor(Math.random() * 100);
+					} else {
+						item.ptt = null;
+						item.rpdpt = null;
+					}
 				}
 
 				item.dateRecorded = new Date(item.dateRecorded).toLocaleString();
@@ -165,7 +174,23 @@ $(function () {
 		var recordType = window.localStorage.getItem("recordType");
 		var recordsLength = window.localStorage.getItem("recordsLength");
 
-		trainingData = { recordType, values: [] }
+		trainingData = { recordType }
+
+		if (recordType == "bos") {
+			trainingData.bos = {};
+			trainingData.bos.inputName = "ratio";
+			trainingData.bos.outputName = "spo2";
+			trainingData.bos.data = [];
+		} else {
+			trainingData.systolic = {};
+			trainingData.systolic.inputName = "ptt";
+			trainingData.systolic.outputName = "sbp";
+			trainingData.systolic.data = [];
+			trainingData.diastolic = {};
+			trainingData.diastolic.inputName = "rpdpt";
+			trainingData.diastolic.outputName = "dbp";
+			trainingData.diastolic.data = [];
+		}
 
 		$('.train-check:checkbox:checked').each(function () {
 			if (this.checked) {
@@ -177,13 +202,17 @@ $(function () {
 				if (recordType == "bos") {
 					var ratio = parseFloat($(`#bos-ratio-${i}`).text());
 					var spo2 = parseFloat($(`#bos-spo2-${i}`).val());
-					trainingData.values.push({ ratio, spo2 });
+					trainingData.bos.data.push([ratio, spo2]);
 				} else {
+					// Systolic
 					var ptt = parseFloat($(`#${recordType}-ptt-${i}`).text());
 					var sbp = parseFloat($(`#${recordType}-sbp-${i}`).val());
+					trainingData.systolic.data.push([ptt, sbp]);
+
+					// Diastolic
 					var rpdpt = parseFloat($(`#${recordType}-rpdpt-${i}`).text());
 					var dbp = parseFloat($(`#${recordType}-dbp-${i}`).val());
-					trainingData.values.push({ ptt, sbp, rpdpt, dbp });
+					trainingData.diastolic.data.push([rpdpt, dbp]);
 				}
 			}
 		});

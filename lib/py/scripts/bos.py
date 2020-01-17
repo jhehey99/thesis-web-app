@@ -51,8 +51,8 @@ if len(sys.argv) > 1:
     duration = int(config['duration'])
 
     # print(f"Config - DataPath: {rawDataPath}")
-    for key, val in config.items():
-        # print(f"Config - {key}: {val}")
+    # for key, val in config.items():
+    # print(f"Config - {key}: {val}")
 
     # print("--------------------------------------------------")
     # Read input data
@@ -275,7 +275,6 @@ if len(sys.argv) > 1:
 
         # ------------------------------------------------------------------
         # Saving Figure
-        # TODO: Get figure filename from the config
         figureFilename = f"{pyResultsPath}/{figureNames[inputIndex]}.{figureType}"
         # print(f"Saving Figure - {figureFilename}")
         plt.tight_layout
@@ -287,24 +286,25 @@ if len(sys.argv) > 1:
     # print(f"Properties - Red Components - {redComponents}")
 
     # Get IR Ratio
-    irAcAve = np.round(np.average(irComponents[AC]), 4)
-    irDcAve = np.round(np.average(irComponents[DC]), 4)
-    irRatio = np.round(irAcAve / irDcAve, 4)
+    precision = 6
+    irAcAve = np.round(np.average(irComponents[AC]), precision)
+    irDcAve = np.round(np.average(irComponents[DC]), precision)
+    irRatio = np.round(irAcAve / irDcAve, precision)
     # print(f"Properties - IR Average - AC: {irAcAve}, DC: {irDcAve}, Ratio: {irRatio}")
 
     # Get Red Ratio
-    redAcAve = np.round(np.average(redComponents[AC]), 4)
-    redDcAve = np.round(np.average(redComponents[DC]), 4)
-    redRatio = np.round(redAcAve / redDcAve, 4)
+    redAcAve = np.round(np.average(redComponents[AC]), precision)
+    redDcAve = np.round(np.average(redComponents[DC]), precision)
+    redRatio = np.round(redAcAve / redDcAve, precision)
     # print(f"Properties - Red Average - AC: {redAcAve}, DC: {redDcAve}, Ratio: {redRatio}")
 
     # Get IR / Red Ratio
-    irRedRatio = np.round(irRatio / redRatio, 4)
+    irRedRatio = np.round(irRatio / redRatio, precision)
     # print(f"Properties - IR/Red Ratio: {irRedRatio}")
 
     # Print IR / Red Ratio as json
-    ratio = {"ratio": str(irRedRatio)}
-    print(json.dumps(ratio))
+    properties = {"ratio": str(irRedRatio)}
+    print(json.dumps(properties))
 
 
 # print("\n##################################################\n")

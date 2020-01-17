@@ -5,7 +5,7 @@ module.exports = {
 		rawDataPath: "",
 		dataFiles: ["ecg.txt", "ppgarm-ir.txt"],
 		pyResultsPath: "",
-		figureNames: ["bparm"],
+		figureNames: ["ecg", "systolic", "diastolic", "final"],
 		figureType: "svg"
 	},
 	bpleg: {

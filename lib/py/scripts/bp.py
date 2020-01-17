@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import scipy.signal as signal
 from scipy.interpolate import interp1d
 
-
+np.seterr(divide='ignore', invalid='ignore')
 figNum = 1
 
 
@@ -20,7 +20,7 @@ def newFigure():
 
 
 def readTimeValuePairs(filePath):
-    print(f"Read - Path: {filePath}")
+    # print(f"Read - Path: {filePath}")
     f = open(filePath)
     count, times, values = 0, [], []
 
@@ -35,10 +35,10 @@ def readTimeValuePairs(filePath):
     return [count, npTimes, npValues]
 
 
-print("\n##################################################\n")
+# print("\n##################################################\n")
 if len(sys.argv) > 1:
-    print("Py Process - BPARM - Node")
-    print("--------------------------------------------------")
+    # print("Py Process - BPARM - Node")
+    # print("--------------------------------------------------")
 
     # Parse Config Arguments
     config = json.loads(sys.argv[1])
@@ -50,52 +50,52 @@ if len(sys.argv) > 1:
     figureType = config['figureType']
     duration = int(config['duration'])
 
-    print(f"Config - DataPath: {rawDataPath}")
-    for key, val in config.items():
-        print(f"Config - {key}: {val}")
+    # print(f"Config - DataPath: {rawDataPath}")
+    # for key, val in config.items():
+        # print(f"Config - {key}: {val}")
 
-    print("--------------------------------------------------")
+    # print("--------------------------------------------------")
     # Read input data
     ECG, PPG = 0, 1
-    print("Read - ECG")
+    # print("Read - ECG")
     ecgPath = f"{rawDataPath}/{dataFiles[ECG]}"
     ecgCount, ecgTimes, ecgValues = readTimeValuePairs(ecgPath)
-    print(f"Read - ECG - Count: {ecgCount}")
+    # print(f"Read - ECG - Count: {ecgCount}")
 
-    print("Read - PPG")
+    # print("Read - PPG")
     ppgPath = f"{rawDataPath}/{dataFiles[PPG]}"
     ppgCount, ppgTimes, ppgValues = readTimeValuePairs(ppgPath)
-    print(f"Read - PPG - Count: {ppgCount}")
+    # print(f"Read - PPG - Count: {ppgCount}")
 
-    print("--------------------------------------------------")
+    # print("--------------------------------------------------")
     # Interpolate signal
     interpolationMultiplier = duration * 100
     ecgInterpolationCount = math.ceil(ecgCount / interpolationMultiplier) * interpolationMultiplier
     ecgInterpolation = interp1d(ecgTimes, ecgValues)
     ecgTimes = np.linspace(ecgTimes[0], ecgTimes[-1], num=ecgInterpolationCount)
     ecgValues = ecgInterpolation(ecgTimes)
-    print(f"Interpolate - ECG Signal from {ecgCount} to {ecgInterpolationCount} Data Points")
+    # print(f"Interpolate - ECG Signal from {ecgCount} to {ecgInterpolationCount} Data Points")
 
     ppgInterpolationCount = math.ceil(ppgCount / interpolationMultiplier) * interpolationMultiplier
     ppgInterpolation = interp1d(ppgTimes, ppgValues)
     ppgTimes = np.linspace(ppgTimes[0], ppgTimes[-1], num=ppgInterpolationCount)
     ppgValues = ppgInterpolation(ppgTimes)
-    print(f"Interpolate - Red Signal from {ppgCount} to {ppgInterpolationCount} Data Points")
+    # print(f"Interpolate - Red Signal from {ppgCount} to {ppgInterpolationCount} Data Points")
 
-    print("--------------------------------------------------")
+    # print("--------------------------------------------------")
     # Processing Blood Pressure
-    print(f"Processing - {title}")
+    # print(f"Processing - {title}")
     figures = []
 
     # Processing ECG
     subplotLoc = 311
-    print(f"Processing - ECG Input Signal")
+    # print(f"Processing - ECG Input Signal")
     N = len(ecgValues)
     Fs = 100
 
     # ------------------------------------------------------------------
     # ECG Input Signal
-    print("Plotting - ECG Input Signal ")
+    # print("Plotting - ECG Input Signal ")
     fig = newFigure()
     figures.append(fig)
     plt.subplot(311)
@@ -107,22 +107,22 @@ if len(sys.argv) > 1:
     # ------------------------------------------------------------------
     # ECG Signal Filtering
     # 10th order bandpass, 5 and 15 Hz cutoff frequencies
-    print(f"Processing - Bandpass Filter ECG Input Signal")
+    # print(f"Processing - Bandpass Filter ECG Input Signal")
     ecgSos = signal.butter(10, [5, 15], 'bandpass', fs=Fs, output='sos')
     filteredEcgValues = np.round(signal.sosfiltfilt(ecgSos, ecgValues), 4)   # zero-phase
 
-    print(f"Processing - Squared Magnitude and Min Max Normalization")
+    # print(f"Processing - Squared Magnitude and Min Max Normalization")
     filteredEcgValues = np.sign(filteredEcgValues) * (filteredEcgValues ** 2)
     minEcgValue, maxEcgValue = np.min(filteredEcgValues), np.max(filteredEcgValues)
     filteredEcgValues = (filteredEcgValues - minEcgValue) / (maxEcgValue - minEcgValue)
 
-    print("Baseline Axis Translation")
+    # print("Baseline Axis Translation")
     minFilteredEcgValues = np.min(filteredEcgValues)
     aveFilteredEcgValues = np.average(filteredEcgValues)
     filteredEcgValues = np.array([x - np.abs(minFilteredEcgValues - aveFilteredEcgValues) for x in filteredEcgValues])
 
     # Plot Pre-processed Signal
-    print("Plotting - Pre-processed ECG Signal")
+    # print("Plotting - Pre-processed ECG Signal")
     plt.subplot(312)
     plt.title("Pre-processed Signal")
     plt.ylabel("Normalized Value")
@@ -131,7 +131,7 @@ if len(sys.argv) > 1:
     plt.ticklabel_format(style='sci', axis='x', scilimits=(0, 0))
     # ------------------------------------------------------------------
     # ECG Signal R-Peak Finding
-    print(f"Peak Finding - ECG R-Peaks")
+    # print(f"Peak Finding - ECG R-Peaks")
     ecgThreshold = 0.05
     ecgPeaks, _ = signal.find_peaks(filteredEcgValues, height=ecgThreshold)
 
@@ -145,7 +145,7 @@ if len(sys.argv) > 1:
     ecgPeaksValues = filteredEcgValues[ecgPeaks]
 
     # Plot ECG R-Peaks
-    print("Plotting - ECG R-Peaks")
+    # print("Plotting - ECG R-Peaks")
     plt.subplot(313)
     plt.title("Initial ECG R-Peaks")
     plt.ylabel("Normalized Value")
@@ -157,17 +157,17 @@ if len(sys.argv) > 1:
     # ------------------------------------------------------------------
     # Saving Figure
     figureFilename = f"{pyResultsPath}/{figureNames[0]}.{figureType}"
-    print(f"Saving Figure - {figureFilename}")
+    # print(f"Saving Figure - {figureFilename}")
     plt.tight_layout()
     plt.savefig(figureFilename, format="svg", bbox_inches='tight')
     # ------------------------------------------------------------------
-    print("--------------------------------------------------")
+    # print("--------------------------------------------------")
     # Processing PPG
-    print("Processing - PPG Input Signal")
+    # print("Processing - PPG Input Signal")
     Fs = 100
 
     # Plotting - PPG Input Signal
-    print("Plotting - PPG Input Signal")
+    # print("Plotting - PPG Input Signal")
     newFigure()
     plt.subplot(311)
     plt.title("PPG Input Signal")
@@ -176,13 +176,13 @@ if len(sys.argv) > 1:
     plt.plot(ppgTimes, ppgValues)
     plt.ticklabel_format(style='sci', axis='x', scilimits=(0, 0))
     # ------------------------------------------------------------------
-    print("Processing - Filter and Normalize PPG Input Signal")
+    # print("Processing - Filter and Normalize PPG Input Signal")
     ppgSos = signal.butter(10, 5, 'lowpass', fs=Fs, output='sos')
     filteredPpgValues = np.round(signal.sosfiltfilt(ppgSos, ppgValues), 4)   # zero-phase
     minPpgValue, maxPpgValue = np.min(filteredPpgValues), np.max(filteredPpgValues)
     filteredPpgValues = (filteredPpgValues - minPpgValue) / (maxPpgValue - minPpgValue)
 
-    print("Plotting - Pre-processed PPG Input Signal")
+    # print("Plotting - Pre-processed PPG Input Signal")
     plt.subplot(312)
     plt.title("Pre-processed Signal")
     plt.ylabel("Normalized Value")
@@ -190,7 +190,7 @@ if len(sys.argv) > 1:
     plt.plot(ppgTimes, filteredPpgValues)
     plt.ticklabel_format(style='sci', axis='x', scilimits=(0, 0))
     # ------------------------------------------------------------------
-    print("Peak Finding - PPG Systolic Peaks")
+    # print("Peak Finding - PPG Systolic Peaks")
     ppgPeaks, _ = signal.find_peaks(filteredPpgValues)
     ppgPeaksDiff = np.diff(ppgPeaks)
     ppgPeaksDiffAve = np.average(ppgPeaksDiff)
@@ -200,8 +200,8 @@ if len(sys.argv) > 1:
     ppgSystolicTimes = ppgTimes[ppgSystolicPeaks]
     ppgSystolicValues = filteredPpgValues[ppgSystolicPeaks]
 
-    print(f"Peak Finding - PPG Systolic Properties: Diff: {ppgPeaksDiff}, AveDiff: {ppgPeaksDiffAve}, Multiplier: {systolicMultiplier}, Distance: {systolicDistance}")
-    print("Plotting - PPG Systolic Peaks")
+    # print(f"Peak Finding - PPG Systolic Properties: Diff: {ppgPeaksDiff}, AveDiff: {ppgPeaksDiffAve}, Multiplier: {systolicMultiplier}, Distance: {systolicDistance}")
+    # print("Plotting - PPG Systolic Peaks")
     plt.subplot(313)
     plt.title("Initial Systolic Peaks")
     plt.ylabel("Normalized Value")
@@ -212,18 +212,18 @@ if len(sys.argv) > 1:
     # ------------------------------------------------------------------
     # Saving Figure
     figureFilename = f"{pyResultsPath}/{figureNames[1]}.{figureType}"
-    print(f"Saving Figure - {figureFilename}")
+    # print(f"Saving Figure - {figureFilename}")
     plt.tight_layout()
     plt.savefig(figureFilename, format="svg", bbox_inches='tight')
     # ------------------------------------------------------------------
-    print("--------------------------------------------------")
-    print("Processing - Derivative and Normalize of Filtered PPG Signal")
+    # print("--------------------------------------------------")
+    # print("Processing - Derivative and Normalize of Filtered PPG Signal")
 
     ppgDerivativeValues = np.gradient(filteredPpgValues)
     minPpgDerivative, maxPpgDerivative = np.min(ppgDerivativeValues), np.max(ppgDerivativeValues)
     ppgDerivativeValues = (ppgDerivativeValues - minPpgDerivative) / (maxPpgDerivative - minPpgDerivative)
 
-    print("Plotting - Derivate of Filtered PPG Signal")
+    # print("Plotting - Derivate of Filtered PPG Signal")
     newFigure()
     plt.subplot(311)
     plt.title('Filtered Signal and 1st Derivative')
@@ -235,8 +235,8 @@ if len(sys.argv) > 1:
     plt.ticklabel_format(style='sci', axis='x', scilimits=(0, 0))
     # plt.axhline(0, color='gray', linestyle='dashed')
     # ------------------------------------------------------------------
-    print("Peak Finding - Filtered and Derivative Minimas")
-    print("Peak Finding - Filtered Flipped Vertical Signal Minima Finding")
+    # print("Peak Finding - Filtered and Derivative Minimas")
+    # print("Peak Finding - Filtered Flipped Vertical Signal Minima Finding")
     yFlipFilteredPpgValues = filteredPpgValues * -1
     yFlipFilteredPeaks, _ = signal.find_peaks(yFlipFilteredPpgValues)
     yFlipFilteredDiff = np.diff(yFlipFilteredPeaks)
@@ -247,12 +247,12 @@ if len(sys.argv) > 1:
     yFlipFilteredTimes = ppgTimes[yFlipFilteredPeaks]
     yFlipFilteredValues = filteredPpgValues[yFlipFilteredPeaks]
 
-    print("Peak Finding - Derivative Flipped Vertical Signal Minima Finding")
+    # print("Peak Finding - Derivative Flipped Vertical Signal Minima Finding")
     yFlipPpgDerivativeValues = ppgDerivativeValues * -1
     yFlipDerivativePeaks, _ = signal.find_peaks(yFlipPpgDerivativeValues)
     yFlipDerivativePeakTimes = ppgTimes[yFlipDerivativePeaks]
 
-    print("Plotting - Detected Filtered and First Derivative Minimas")
+    # print("Plotting - Detected Filtered and First Derivative Minimas")
     plt.subplot(312)
     plt.title('Detected Filtered and First Derivative Minimas')
     plt.ylabel("Normalized Value")
@@ -266,8 +266,8 @@ if len(sys.argv) > 1:
     for t in yFlipDerivativePeakTimes:
         plt.axvline(t, color='r', linestyle='dashed')
     # ------------------------------------------------------------------
-    print("--------------------------------------------------")
-    print("Peak Finding - PPG Diastolic Peaks")
+    # print("--------------------------------------------------")
+    # print("Peak Finding - PPG Diastolic Peaks")
     # First Derivative Minima after each Filtered Minima
     ppgDiastolicPeaks = []
     for filteredMinima in yFlipFilteredPeaks:
@@ -279,7 +279,7 @@ if len(sys.argv) > 1:
     ppgDiastolicTimes = ppgTimes[ppgDiastolicPeaks]
     ppgDiastolicValues = filteredPpgValues[ppgDiastolicPeaks]
 
-    print("Plotting - PPG Diastolic Peaks")
+    # print("Plotting - PPG Diastolic Peaks")
     plt.subplot(313)
     plt.title("Initial Diastolic Peaks")
     plt.ylabel("Normalized Value")
@@ -290,12 +290,12 @@ if len(sys.argv) > 1:
     # ------------------------------------------------------------------
     # Saving Figure
     figureFilename = f"{pyResultsPath}/{figureNames[2]}.{figureType}"
-    print(f"Saving Figure - {figureFilename}")
+    # print(f"Saving Figure - {figureFilename}")
     plt.tight_layout()
     plt.savefig(figureFilename, format="svg", bbox_inches='tight')
     # ------------------------------------------------------------------
-    print("--------------------------------------------------")
-    print("Windowing - Determining 6 second strip window")
+    # print("--------------------------------------------------")
+    # print("Windowing - Determining 6 second strip window")
     referencePoint = yFlipFilteredPeaks[0]
     ecgStartTime = ecgTimes[referencePoint]
     ecgEndTime = ecgStartTime
@@ -311,19 +311,19 @@ if len(sys.argv) > 1:
             break
         ppgEndTime = t
 
-    print("Peak Matching - Get Points After Reference Point")
+    # print("Peak Matching - Get Points After Reference Point")
     finalEcgPeaks = [p for p in ecgPeaks if p >= referencePoint and ecgTimes[p] <= ecgEndTime]
     refSystolicPeaks = [p for p in ppgSystolicPeaks if p >= referencePoint and ppgTimes[p] <= ppgEndTime]
     refDiastolicPeaks = [p for p in ppgDiastolicPeaks if p >= referencePoint and ppgTimes[p] <= ppgEndTime]
 
-    print("Peak Matching - Get ECG and Systolic Points After First Diastolic Peak")
+    # print("Peak Matching - Get ECG and Systolic Points After First Diastolic Peak")
     finalSystolicPeaks = refSystolicPeaks
     if len(refDiastolicPeaks) > 0:
         firstDiastolicPeak = refDiastolicPeaks[0]
         finalSystolicPeaks = [
             p for p in finalSystolicPeaks if p >= firstDiastolicPeak]
 
-    print("Peak Matching - Get ECG and Diastolic Peaks Before Last Systolic Peak")
+    # print("Peak Matching - Get ECG and Diastolic Peaks Before Last Systolic Peak")
     finalDiastolicPeaks = refDiastolicPeaks
     if len(refSystolicPeaks) > 1:
         lastSystolicPeak = refSystolicPeaks[-1]
@@ -338,7 +338,7 @@ if len(sys.argv) > 1:
     finalDiastolicPeakValues = filteredPpgValues[finalDiastolicPeaks]
 
     newFigure()
-    print("Plotting - Final ECG R-Peaks")
+    # print("Plotting - Final ECG R-Peaks")
     plt.subplot(311)
     plt.title("Final ECG R-Peaks")
     plt.ylabel("Normalized Value")
@@ -351,7 +351,7 @@ if len(sys.argv) > 1:
     for t in finalEcgPeakTimes:
         plt.axvline(t, linestyle='--', color='gray')
 
-    print("Plotting - Final PPG Systolic Peaks")
+    # print("Plotting - Final PPG Systolic Peaks")
     plt.subplot(312)
     plt.title("Final PPG Systolic Peaks")
     plt.ylabel("Normalized Value")
@@ -364,7 +364,7 @@ if len(sys.argv) > 1:
     for t in finalSystolicPeakTimes:
         plt.axvline(t, linestyle='--', color='gray')
 
-    print("Plotting - Final PPG Diastolic Peaks")
+    # print("Plotting - Final PPG Diastolic Peaks")
     plt.subplot(313)
     plt.title("Final PPG Diastolic Peaks")
     plt.ylabel("Normalized Value")
@@ -381,12 +381,27 @@ if len(sys.argv) > 1:
     # ------------------------------------------------------------------
     # Saving Figure
     figureFilename = f"{pyResultsPath}/{figureNames[3]}.{figureType}"
-    print(f"Saving Figure - {figureFilename}")
+    # print(f"Saving Figure - {figureFilename}")
     plt.tight_layout()
     plt.savefig(figureFilename, format="svg", bbox_inches='tight')
 
-    # TODO: Save the properties to a file
+    # TODO: Compute these properties
+    # heartRate - Ecg r-peak formula
+    # ptt - Ecg r-peak - Ppg systolic peak times
+    # rpdpt - Ecg r-peak - Ppg diastolic peak times
+    # Print properties as json
+    import random
+    precision = 6
+    heartRate = int(random.randrange(50, 100))
+    ptt = np.round(random.random() * random.randrange(15, 35), precision)
+    rpdpt = np.round(random.random() * random.randrange(15, 35), precision)
 
+    properties = {
+        "heartRate": str(heartRate),
+        "ptt": str(ptt),
+        "rpdpt": str(rpdpt)
+    }
+    print(json.dumps(properties))
 
-print("\n##################################################\n")
+# print("\n##################################################\n")
 exit()
