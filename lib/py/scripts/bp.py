@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import scipy.signal as signal
 from scipy.interpolate import interp1d
 
+
 np.seterr(divide='ignore', invalid='ignore')
 figNum = 1
 
@@ -52,7 +53,7 @@ if len(sys.argv) > 1:
 
     # print(f"Config - DataPath: {rawDataPath}")
     # for key, val in config.items():
-        # print(f"Config - {key}: {val}")
+    # print(f"Config - {key}: {val}")
 
     # print("--------------------------------------------------")
     # Read input data
@@ -109,7 +110,7 @@ if len(sys.argv) > 1:
     # 10th order bandpass, 5 and 15 Hz cutoff frequencies
     # print(f"Processing - Bandpass Filter ECG Input Signal")
     ecgSos = signal.butter(10, [5, 15], 'bandpass', fs=Fs, output='sos')
-    filteredEcgValues = np.round(signal.sosfiltfilt(ecgSos, ecgValues), 4)   # zero-phase
+    filteredEcgValues = np.round(signal.sosfiltfilt(ecgSos, ecgValues), 4)  # zero-phase
 
     # print(f"Processing - Squared Magnitude and Min Max Normalization")
     filteredEcgValues = np.sign(filteredEcgValues) * (filteredEcgValues ** 2)
@@ -178,7 +179,7 @@ if len(sys.argv) > 1:
     # ------------------------------------------------------------------
     # print("Processing - Filter and Normalize PPG Input Signal")
     ppgSos = signal.butter(10, 5, 'lowpass', fs=Fs, output='sos')
-    filteredPpgValues = np.round(signal.sosfiltfilt(ppgSos, ppgValues), 4)   # zero-phase
+    filteredPpgValues = np.round(signal.sosfiltfilt(ppgSos, ppgValues), 4)  # zero-phase
     minPpgValue, maxPpgValue = np.min(filteredPpgValues), np.max(filteredPpgValues)
     filteredPpgValues = (filteredPpgValues - minPpgValue) / (maxPpgValue - minPpgValue)
 
@@ -197,6 +198,20 @@ if len(sys.argv) > 1:
     systolicMultiplier = 0.75
     systolicDistance = ppgPeaksDiffAve * systolicMultiplier
     ppgSystolicPeaks, _ = signal.find_peaks(filteredPpgValues, distance=systolicDistance)
+
+    # print("Peak Finding - Get Systolic Peaks before minima")
+    invertedPpgValues = filteredPpgValues * -1
+    invertedPpgPeaks, _ = signal.find_peaks(invertedPpgValues, distance=systolicDistance)
+    initialSystolicPeaks = []
+
+    for i, invertedPpgPeak in enumerate(invertedPpgPeaks):
+        peaksBeforeInvertedPeak = [systolicPeak for systolicPeak in ppgSystolicPeaks if systolicPeak <= invertedPpgPeak]
+        if len(peaksBeforeInvertedPeak) <= 0:
+            continue
+        latestSystolicPeak = max(peaksBeforeInvertedPeak)
+        initialSystolicPeaks.append(latestSystolicPeak)
+
+    ppgSystolicPeaks = initialSystolicPeaks
     ppgSystolicTimes = ppgTimes[ppgSystolicPeaks]
     ppgSystolicValues = filteredPpgValues[ppgSystolicPeaks]
 
@@ -320,15 +335,13 @@ if len(sys.argv) > 1:
     finalSystolicPeaks = refSystolicPeaks
     if len(refDiastolicPeaks) > 0:
         firstDiastolicPeak = refDiastolicPeaks[0]
-        finalSystolicPeaks = [
-            p for p in finalSystolicPeaks if p >= firstDiastolicPeak]
+        finalSystolicPeaks = [p for p in finalSystolicPeaks if p >= firstDiastolicPeak]
 
     # print("Peak Matching - Get ECG and Diastolic Peaks Before Last Systolic Peak")
     finalDiastolicPeaks = refDiastolicPeaks
     if len(refSystolicPeaks) > 1:
         lastSystolicPeak = refSystolicPeaks[-1]
-        finalDiastolicPeaks = [
-            p for p in finalDiastolicPeaks if p <= lastSystolicPeak]
+        finalDiastolicPeaks = [p for p in finalDiastolicPeaks if p <= lastSystolicPeak]
 
     finalEcgPeakTimes = ecgTimes[finalEcgPeaks]
     finalEcgPeakValues = filteredEcgValues[finalEcgPeaks]
@@ -386,16 +399,31 @@ if len(sys.argv) > 1:
     plt.savefig(figureFilename, format="svg", bbox_inches='tight')
 
     # TODO: Compute these properties
-    # heartRate - Ecg r-peak formula
-    # ptt - Ecg r-peak - Ppg systolic peak times
-    # rpdpt - Ecg r-peak - Ppg diastolic peak times
-    # Print properties as json
-    import random
+    # ------------------------------------------------------------------
+    # Computing Properties
     precision = 6
-    heartRate = int(random.randrange(50, 100))
-    ptt = np.round(random.random() * random.randrange(15, 35), precision)
-    rpdpt = np.round(random.random() * random.randrange(15, 35), precision)
+    lenEcg, lenSys, lenDia = len(finalEcgPeakTimes), len(finalSystolicPeakTimes), len(finalDiastolicPeakTimes)
 
+    # Heart Rate = 60 / R - R Duration
+    ecgRRDurations = np.array([finalEcgPeakTimes[i + 1] - finalEcgPeakTimes[i] for i in range(lenEcg - 1)])
+    aveEcgRRDuration = np.average(ecgRRDurations) / 1000  # ms -> s
+    heartRate = int(np.round(60 / aveEcgRRDuration))
+
+    # ptt - Ecg R-Peak - Ppg Systolic peak times
+    ptts = []
+    for i in range(min(lenEcg, lenSys)):
+        ecg, sys = finalEcgPeakTimes[i], finalSystolicPeakTimes[i]
+        ptts.append(abs(sys - ecg))
+    ptt = np.round(np.average(np.array(ptts)), precision)
+
+    # rpdpt - Ecg R-Peak - Ppg Diastolic peak times
+    rpdpts = []
+    for i in range(min(lenEcg, lenDia)):
+        ecg, dia = finalEcgPeakTimes[i], finalDiastolicPeakTimes[i]
+        rpdpts.append(abs(dia - ecg))
+    rpdpt = np.round(np.average(np.array(rpdpts)), precision)
+
+    # Print properties as json
     properties = {
         "heartRate": str(heartRate),
         "ptt": str(ptt),

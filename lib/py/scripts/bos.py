@@ -147,7 +147,9 @@ if len(sys.argv) > 1:
         # Low Pass Filter
         lpSos = signal.butter(10, 5, 'lowpass', fs=Fs, output='sos')
         filteredValue = np.round(signal.sosfiltfilt(lpSos, inputValue), 4)  # zero-phase
-        minValue, maxValue = 0.0001, 1024
+
+        # Min-Max Normalization
+        minValue, maxValue = 0, 1024
         filteredValue = (filteredValue - minValue) / (maxValue - minValue)
 
         # Plot Filtered Signal

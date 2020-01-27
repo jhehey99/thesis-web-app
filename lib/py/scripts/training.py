@@ -19,7 +19,14 @@ if len(sys.argv) > 1:
     title = config["title"]
     data = config["data"]
     length = len(data)
+    precision = 6
     print(f"{title} - Input: {inputName}, Output: {outputName}, Length: {length}")
+
+    # Table Properties
+    table_rows = ["Equation", "Coefficient", "Intercept", "MSE", "Score", "Correlation"]
+    table_columns = ["Properties"]
+    table_bbox = [0.2, -0.6, 0.8, .4]  # left, bottom, width, height
+    table_loc = "bottom"
 
     # Separate Training and Testing Datasets, 80% is for Training. Others is Testing
     train_len = math.floor(length * 0.80)
@@ -59,50 +66,78 @@ if len(sys.argv) > 1:
     model.fit(train_X, train_y)
     train_predict_y = model.predict(train_X)
 
+    coefficient, intercept = np.round(model.coef_[0], precision), np.round(model.intercept_, precision)
+    equation = f"{outputName} = {coefficient}*{inputName} + {intercept}"
+
+    # Dump Trained Model
+    filename = f"{trainingType}.joblib"
+    filepath = os.path.join(saveDir, filename)
+    with open(filepath, "wb") as saveFile:
+        dump(model, saveFile)
+
     # Training Properties
     train_properties = dict()
-    train_properties["coefficients"] = model.coef_
-    train_properties["intercept"] = model.intercept_
-    train_properties["mse"] = mean_squared_error(train_y, train_predict_y)
-    train_properties["score"] = r2_score(train_y, train_predict_y)
+    train_properties["equation"] = equation
+    train_properties["coefficient"] = coefficient
+    train_properties["intercept"] = intercept
+    train_properties["mse"] = np.round(mean_squared_error(train_y, train_predict_y), precision)
+    train_properties["score"] = np.round(r2_score(train_y, train_predict_y), precision)
+    train_properties["correlation"] = "TODO"
     print("Training Properties")
     print(train_properties)
 
-    # Plot Trained Model
-    plt.figure()
+    # Plot Training
+    plt.figure(1, figsize=(13, 6))
+    plt.subplot(121)
     plt.scatter(train_X, train_y, color="blue")
     plt.plot(train_X, train_predict_y, color="red")
     plt.title(f"Training - {title}")
     plt.xlabel(inputName)
     plt.ylabel(outputName)
 
-    # # Dump Trained Model
-    filename = f"{trainingType}.joblib"
-    filepath = os.path.join(saveDir, filename)
-    with open(filepath, "wb") as saveFile:
-        dump(model, saveFile)
+    # Training Properties Table
+    train_cell_text = [[x] for x in train_properties.values()]
+    train_properties_table = plt.table(
+        cellText=train_cell_text,
+        rowLabels=table_rows,
+        colLabels=table_columns,
+        loc=table_loc,
+        bbox=table_bbox
+    )
 
-    # # Test the model using testing dataset
+    # Test the model using testing dataset
     test_predict_y = model.predict(test_X)
 
-    plt.figure()
+    # Testing Properties
+    # Coefficient, Intercept, Mean Squared Error, Coefficient of determination, TODO: Correlation Coefficient
+    test_properties = dict()
+    test_properties["equation"] = equation
+    test_properties["coefficient"] = coefficient
+    test_properties["intercept"] = intercept
+    test_properties["mse"] = np.round(mean_squared_error(test_y, test_predict_y), precision)
+    test_properties["score"] = np.round(r2_score(test_y, test_predict_y), precision)
+    test_properties["correlation"] = "TODO"
+    print("Testing Properties")
+    print(test_properties)
+
+    # Plot Testing
+    plt.subplot(122)
     plt.scatter(test_X, test_y, color='blue')
     plt.plot(test_X, test_predict_y, color="red")
     plt.title(f"Testing - {title}")
     plt.xlabel(inputName)
     plt.ylabel(outputName)
 
-    # Properties
-    # Root Mean Squared Error
-    # Coefficients and Intercept
-    # Coefficient of determination
-    # Correlation Coefficient
-    test_properties = dict()
-    test_properties["coefficients"] = model.coef_
-    test_properties["intercept"] = model.intercept_
-    test_properties["mse"] = mean_squared_error(test_y, test_predict_y)
-    test_properties["score"] = r2_score(test_y, test_predict_y)
-    print("Testing Properties")
-    print(test_properties)
+    # Testing Properties Table
+    test_cell_text = [[x] for x in test_properties.values()]
+    test_properties_table = plt.table(
+        cellText=test_cell_text,
+        rowLabels=table_rows,
+        colLabels=table_columns,
+        loc=table_loc,
+        bbox=table_bbox
+    )
 
+    # Adjust layout to make room for the table:
+    plt.subplots_adjust(bottom=0.35)
     plt.show()

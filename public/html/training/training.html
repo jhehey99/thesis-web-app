@@ -63,6 +63,7 @@
 							<th scope="col" data-bind="if: typeBos">SpO2 %</th>
 
 							<!-- Blood Pressure -->
+							<th scope="col" data-bind="if: typeBp">Heart Rate</th>
 							<th scope="col" data-bind="if: typeBp">PTT</th>
 							<th scope="col" data-bind="if: typeBp">Systolic BP</th>
 							<th scope="col" data-bind="if: typeBp">RPDPT</th>
@@ -88,6 +89,7 @@
 								</td>
 
 								<!-- Blood Pressure -->
+								<td data-bind="if: typeBp"><span data-bind="attr: { 'id': hrId }, text: heartRate">Null</span></td>
 								<td data-bind="if: typeBp"><span data-bind="attr: { 'id': pttId }, text: ptt">Null</span></td>
 								<td data-bind="if: typeBp">
 									<input data-bind="attr: { 'id': sbpId }" class="form-control w-50" type="number" style="margin-left: auto; margin-right: auto; text-align: center;">

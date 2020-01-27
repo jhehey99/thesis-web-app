@@ -15,6 +15,7 @@ function TrainingRecordListViewModel(recordType = "bos") {
 				item.spo2Id = `${recordType}-spo2-${item.index}`;
 
 				// Bp
+				item.hrId = `${recordType}-hr-${item.index}`;
 				item.pttId = `${recordType}-ptt-${item.index}`;
 				item.sbpId = `${recordType}-sbp-${item.index}`;
 				item.rpdptId = `${recordType}-rpdpt-${item.index}`;
@@ -34,6 +35,7 @@ function TrainingRecordListViewModel(recordType = "bos") {
 					}
 				} else {
 					if (item.properties) {
+						item.heartRate = parseInt(item.properties.heartRate);
 						item.ptt = item.properties.ptt; // Math.floor(Math.random() * 100);
 						item.rpdpt = item.properties.rpdpt; // Math.floor(Math.random() * 100);
 					} else {
