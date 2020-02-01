@@ -220,42 +220,11 @@ if len(sys.argv) > 1:
 
     baselineValues = baseline_als(filteredPpgValues, 300, 0.05)
 
-
     # ------------------------------------------------------------------
     # print("Peak Finding - Find Minima")
     # pagkakuha nung inverted peaks. i-peak finding ung peaks, to get the correct minimas
-    # invertedPpgValues = filteredPpgValues * -1
     invertedPpgValues = baselineValues * -1
-    invertedPpgPeaks, _ = signal.find_peaks(invertedPpgValues)
-
-    # invertedPpgPeaksAndValues = []
-    # for invertedPpgPeak in invertedPpgPeaks:
-    #     invertedPpgPeaksAndValues.append((invertedPpgPeak, invertedPpgValues[invertedPpgPeak]))
-
-    # sortedInvertedPpgPeaksAndValues = sorted(invertedPpgPeaksAndValues, reverse=True, key=lambda x: x[1])
-
-    # print("MAMA MO")
-    # print("############################")
-
-    # print(sortedInvertedPpgPeaksAndValues)
-    # print("############################")
-
-    # minimas = []
-    # for i in range(len(sortedInvertedPpgPeaksAndValues) - 1):
-    #     diff = abs(sortedInvertedPpgPeaksAndValues[i + 1][1] - sortedInvertedPpgPeaksAndValues[i][1])
-    #     print(diff, end=" ")
-    #     if abs(sortedInvertedPpgPeaksAndValues[i + 1][0] - sortedInvertedPpgPeaksAndValues[i][0]) > 30:  # width
-    #         minimas.append(sortedInvertedPpgPeaksAndValues[i][0])
-    #     if diff > 0.5:  # height
-    #         break
-
-    # print("############################")
-    # print(minimas)
-    # minimas.sort()
-    # print("MAMA MO")
-    # print(minimas)
-
-    minimas = invertedPpgPeaks
+    minimas, _ = signal.find_peaks(invertedPpgValues)
 
     # print("Plotting - Pre-processed PPG Input Signal")
     plt.subplot(312)
@@ -267,8 +236,8 @@ if len(sys.argv) > 1:
     plt.plot(ppgTimes[minimas], filteredPpgValues[minimas], 'x', color='magenta')
 
     # inverted
-    # plt.plot(ppgTimes, invertedPpgValues, color='green')
-    # plt.plot(ppgTimes[minimas], invertedPpgValues[minimas], 'x', color='red')
+    plt.plot(ppgTimes, invertedPpgValues, color='green')
+    plt.plot(ppgTimes[minimas], invertedPpgValues[minimas], 'x', color='red')
     plt.ticklabel_format(style='sci', axis='x', scilimits=(0, 0))
 
     # ------------------------------------------------------------------
@@ -369,21 +338,45 @@ if len(sys.argv) > 1:
     # print("Peak Finding - PPG Diastolic Peaks")
     # First Derivative Minima after each Filtered Minima
     ppgDiastolicPeaks = []
-    for filteredMinima in minimas:
+    for i in range(len(minimas) - 1):
+        filteredMinima, nxtMinima = minimas[i], minimas[i + 1]
+        derivativeMinimas = []
         for derivativeMinima in yFlipDerivativePeaks:
-            if derivativeMinima >= filteredMinima:
-                ppgDiastolicPeaks.append(derivativeMinima)
-                break
+            if derivativeMinima >= filteredMinima and derivativeMinima < nxtMinima:
+                derivativeMinimas.append((derivativeMinima, ppgDerivativeValues[derivativeMinima]))
+
+        # print("MAMA MO NA NAMAN")
+        # print(derivativeMinimas)
+        if len(derivativeMinimas) >= 3:
+            derivativeMinimas.pop()
+        if len(derivativeMinimas) >= 2:
+            derivativeMinimas.pop()
+        ppgDiastolicPeaks.append(min(derivativeMinimas, key=lambda x: abs(x[1] - 0.5))[0])
+
 
     # print("Peak Removal - PPG Diastolic Peaks")
     # Get Diastolic Peak after each minima
     initialDiastolicPeaks = []
 
-    for i, minima in enumerate(minimas):
-        peaksBeforeMinima = [diastolicPeak for diastolicPeak in ppgDiastolicPeaks if diastolicPeak >= minima]
+    # print("MAMA KO")
+    # print(ppgDiastolicPeaks)
+
+    for i in range(len(minimas) - 1):
+        minima, nxt = minimas[i], minimas[i + 1]
+        peaksBeforeMinima = [diastolicPeak for diastolicPeak in ppgDiastolicPeaks if diastolicPeak >= minima and diastolicPeak < nxt]
+        # peaksBeforeMinima = [diastolicPeak for diastolicPeak in ppgDiastolicPeaks if diastolicPeak >= minima and diastolicPeak < nxt]
         if len(peaksBeforeMinima) <= 0:
             continue
-        recentDiastolicPeak = min(peaksBeforeMinima)
+
+        peakValsBeforeMinima = []
+        for p in peaksBeforeMinima:
+            peakValsBeforeMinima.append((p, filteredPpgValues[p]))
+
+        # print("MAMA MO")
+        # print(peakValsBeforeMinima)
+        recentDiastolicPeak = min(peakValsBeforeMinima, key=lambda x: x[1])[0]
+        # print(recentDiastolicPeak)
+        # recentDiastolicPeak = min(peaksBeforeMinima)
         initialDiastolicPeaks.append(recentDiastolicPeak)
 
     ppgDiastolicPeaks = initialDiastolicPeaks
@@ -447,7 +440,6 @@ if len(sys.argv) > 1:
         lastSystolicPeak = finalSystolicPeaks[-1]
         finalDiastolicPeaks = [p for p in finalDiastolicPeaks if p <= lastSystolicPeak]
 
-
     # for i, minima in enumerate(minimas):
     #     peaksBeforeMinima = [systolicPeak for systolicPeak in ppgSystolicPeaks if systolicPeak <= minima]
     #     if len(peaksBeforeMinima) <= 0:
@@ -460,20 +452,20 @@ if len(sys.argv) > 1:
 
     for i, ecgPeak in enumerate(finalEcgPeaks):
         # get nearest systolic peak to the right of an ecg peak
-        sysPeaksAfterEcgPeak = [sysPeak for sysPeak in finalSystolicPeaks if sysPeak >= ecgPeak]
+        sysPeaksAfterEcgPeak = [sysPeak for sysPeak in finalSystolicPeaks if sysPeak >= ecgPeak and sysPeak not in sysMatch]
         if len(sysPeaksAfterEcgPeak) <= 0:
             continue
         nearestSystolicPeak = min(sysPeaksAfterEcgPeak)
-        if nearestSystolicPeak in sysMatch:
-            continue
+        # if nearestSystolicPeak in sysMatch:
+            # continue
 
         # get nearest diastolic peak to the left of the nearest systolic peak
-        diaPeaksBeforeEcgPeak = [diaPeak for diaPeak in finalDiastolicPeaks if diaPeak < nearestSystolicPeak]
+        diaPeaksBeforeEcgPeak = [diaPeak for diaPeak in finalDiastolicPeaks if diaPeak < nearestSystolicPeak and diaPeak not in diaMatch]
         if len(diaPeaksBeforeEcgPeak) <= 0:
             continue
         nearestDiastolicPeak = max(diaPeaksBeforeEcgPeak)
-        if nearestDiastolicPeak in diaMatch:
-            continue
+        # if nearestDiastolicPeak in diaMatch:
+            # continue
 
         if nearestDiastolicPeak < nearestSystolicPeak:
             ecgMatch.append(ecgPeak)

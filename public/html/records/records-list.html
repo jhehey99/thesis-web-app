@@ -44,7 +44,8 @@
 								<h6 class="card-text">Date Recorded: <span data-bind="text: dateRecorded"></span></h6>
 								<a data-bind="attr: { 'href': recordUrl }" class="btn btn-primary float-right">View Record</a>
 								<a style="margin-right: 2%;" data-bind="attr: { 'href': deleteUrl }" class="btn btn-danger float-right">Delete Record</a>
-								<a style="margin-right: 2%;" data-bind="attr: { 'href': reprocessUrl }" class="btn btn-warning float-right">Reprocess</a>
+								<!-- <a style="margin-right: 2%;" data-bind="attr: { 'href': reprocessUrl }" class="btn btn-warning float-right">Reprocess</a> -->
+								<button style="margin-right: 2%;" data-bind="{ 'click': reprocess }" class="btn btn-warning float-right">Reprocess</button>
 							</div>
 						</div>
 					</li>

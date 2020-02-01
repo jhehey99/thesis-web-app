@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const path = require("path");
+const Record = require("../../models/record");
 
 /**
  * View list of records
@@ -38,20 +39,44 @@ router.get("/delete/:recordId(\\w+)/", function (req, res) {
 router.get("/reprocess/:recordId", function (req, res) {
 
 	var recordId = req.params.recordId;
-	var recordType = req.query.recordType;
-	data = { recordId, duration: 8 };
+	if (recordId != "all") {
+		var recordType = req.query.recordType;
+		data = { recordId, duration: 8 };
 
-	console.log(`Reprocessing: ${data}`);
+		console.log("Reprocessing");
+		console.log({ data, recordType });
 
-	/* Python Config */
-	const pyConfig = require("../../config/pyrunner");
-	const PyRunner = require("../../lib/py/pyrunner");
+		/* Python Config */
+		const pyConfig = require("../../config/pyrunner");
+		const PyRunner = require("../../lib/py/pyrunner");
 
-	const pyRunner = new PyRunner(pyConfig[recordType]);
-	pyRunner.initialize(data);
-	pyRunner.execute();
+		const pyRunner = new PyRunner(pyConfig[recordType]);
+		pyRunner.initialize(data);
+		pyRunner.execute();
 
-	res.redirect("/records");
+		res.redirect("/records");
+	} else {
+		console.log("Reprocessing ALL");
+		Record.find().exec(function (err, records) {
+			if (err) { console.error(err); return res.json(err); }
+			for (var i = 0; i < records.length; i++) {
+				data = { recordId: records[i].recordId, duration: 8 };
+				var recordType = records[i].recordType;
+				console.log("Reprocessing");
+				console.log({ data, recordType });
+
+				/* Python Config */
+				const pyConfig = require("../../config/pyrunner");
+				const PyRunner = require("../../lib/py/pyrunner");
+
+				const pyRunner = new PyRunner(pyConfig[recordType]);
+				pyRunner.initialize(data);
+				pyRunner.execute();
+			}
+
+			res.json(records);
+		});
+	}
 });
 
 

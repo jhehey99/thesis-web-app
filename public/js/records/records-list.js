@@ -36,6 +36,13 @@ function RecordListViewModel() {
 						item.recordUrl = `/records/${item.recordId}`;
 						item.deleteUrl = `/records/delete/${item.recordId}`;
 						item.reprocessUrl = `/records/reprocess/${item.recordId}?recordType=${item.recordType}`;
+						item.reprocess = async function (data) {
+							console.log(data.reprocessUrl());
+							const response = await fetch(data.reprocessUrl(), {
+								method: "GET"
+							});
+							console.log(response);
+						}
 						item.index = i + 1 + ((pagination.pageNumber - 1) * pagination.pageSize);
 						mappedRecords.push(ko.mapping.fromJS(item));
 					}
