@@ -12,7 +12,7 @@ router.get("/", function (req, res) {
 /**
  * View single record
  */
-router.get("/:recordId", function (req, res) {
+router.get("/:recordId(\\w+)/", function (req, res) {
 	res.html("records/view-record");
 });
 
@@ -31,8 +31,28 @@ router.get("/:recordId/results", function (req, res) {
 	res.sendFile(figuresPath);
 });
 
-router.get("/delete/:recordId", function (req, res) {
+router.get("/delete/:recordId(\\w+)/", function (req, res) {
 	res.html("records/delete-record");
 });
+
+router.get("/reprocess/:recordId", function (req, res) {
+
+	var recordId = req.params.recordId;
+	var recordType = req.query.recordType;
+	data = { recordId, duration: 8 };
+
+	console.log(`Reprocessing: ${data}`);
+
+	/* Python Config */
+	const pyConfig = require("../../config/pyrunner");
+	const PyRunner = require("../../lib/py/pyrunner");
+
+	const pyRunner = new PyRunner(pyConfig[recordType]);
+	pyRunner.initialize(data);
+	pyRunner.execute();
+
+	res.redirect("/records");
+});
+
 
 module.exports = router;

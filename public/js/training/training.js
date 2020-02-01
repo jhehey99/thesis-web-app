@@ -39,6 +39,7 @@ function TrainingRecordListViewModel(recordType = "bos") {
 						item.ptt = item.properties.ptt; // Math.floor(Math.random() * 100);
 						item.rpdpt = item.properties.rpdpt; // Math.floor(Math.random() * 100);
 					} else {
+						item.heartRate = null;
 						item.ptt = null;
 						item.rpdpt = null;
 					}

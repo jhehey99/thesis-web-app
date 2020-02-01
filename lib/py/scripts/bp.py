@@ -20,17 +20,21 @@ def newFigure():
     return fig
 
 
-def readTimeValuePairs(filePath):
+def readTimeValuePairs(filePath, skip=0):
     # print(f"Read - Path: {filePath}")
     f = open(filePath)
     count, times, values = 0, [], []
 
     for line in f:
+        if count < skip:
+            count += 1
+            continue
         t, v = [int(x) for x in line.strip().split(',')]
         times.append(t)
         values.append(v)
         count += 1
 
+    count -= skip
     f.close()
     npTimes, npValues = np.array(times), np.array(values)
     return [count, npTimes, npValues]
@@ -60,12 +64,12 @@ if len(sys.argv) > 1:
     ECG, PPG = 0, 1
     # print("Read - ECG")
     ecgPath = f"{rawDataPath}/{dataFiles[ECG]}"
-    ecgCount, ecgTimes, ecgValues = readTimeValuePairs(ecgPath)
+    ecgCount, ecgTimes, ecgValues = readTimeValuePairs(ecgPath, skip=100)
     # print(f"Read - ECG - Count: {ecgCount}")
 
     # print("Read - PPG")
     ppgPath = f"{rawDataPath}/{dataFiles[PPG]}"
-    ppgCount, ppgTimes, ppgValues = readTimeValuePairs(ppgPath)
+    ppgCount, ppgTimes, ppgValues = readTimeValuePairs(ppgPath, skip=100)
     # print(f"Read - PPG - Count: {ppgCount}")
 
     # print("--------------------------------------------------")
@@ -75,8 +79,13 @@ if len(sys.argv) > 1:
     ecgInterpolation = interp1d(ecgTimes, ecgValues)
     ecgTimes = np.linspace(ecgTimes[0], ecgTimes[-1], num=ecgInterpolationCount)
     ecgValues = ecgInterpolation(ecgTimes)
-    # print(f"Interpolate - ECG Signal from {ecgCount} to {ecgInterpolationCount} Data Points")
 
+    # convert nans to number next to it
+    for i in range(len(ecgValues) - 1):
+        if np.isnan(ecgValues[i]):
+            ecgValues[i] = ecgValues[i + 1]
+
+    # print(f"Interpolate - ECG Signal from {ecgCount} to {ecgInterpolationCount} Data Points")
     ppgInterpolationCount = math.ceil(ppgCount / interpolationMultiplier) * interpolationMultiplier
     ppgInterpolation = interp1d(ppgTimes, ppgValues)
     ppgTimes = np.linspace(ppgTimes[0], ppgTimes[-1], num=ppgInterpolationCount)
@@ -116,11 +125,13 @@ if len(sys.argv) > 1:
     filteredEcgValues = np.sign(filteredEcgValues) * (filteredEcgValues ** 2)
     minEcgValue, maxEcgValue = np.min(filteredEcgValues), np.max(filteredEcgValues)
     filteredEcgValues = (filteredEcgValues - minEcgValue) / (maxEcgValue - minEcgValue)
+    # print(filteredEcgValues)
 
     # print("Baseline Axis Translation")
     minFilteredEcgValues = np.min(filteredEcgValues)
     aveFilteredEcgValues = np.average(filteredEcgValues)
     filteredEcgValues = np.array([x - np.abs(minFilteredEcgValues - aveFilteredEcgValues) for x in filteredEcgValues])
+    # print(filteredEcgValues)
 
     # Plot Pre-processed Signal
     # print("Plotting - Pre-processed ECG Signal")
@@ -133,7 +144,7 @@ if len(sys.argv) > 1:
     # ------------------------------------------------------------------
     # ECG Signal R-Peak Finding
     # print(f"Peak Finding - ECG R-Peaks")
-    ecgThreshold = 0.05
+    ecgThreshold = 0.10  # 0.05
     ecgPeaks, _ = signal.find_peaks(filteredEcgValues, height=ecgThreshold)
 
     ecgPeaksDiff = np.diff(ecgPeaks)
@@ -180,16 +191,86 @@ if len(sys.argv) > 1:
     # print("Processing - Filter and Normalize PPG Input Signal")
     ppgSos = signal.butter(10, 5, 'lowpass', fs=Fs, output='sos')
     filteredPpgValues = np.round(signal.sosfiltfilt(ppgSos, ppgValues), 4)  # zero-phase
+    unnormalizedValues = filteredPpgValues
+
+    # Normalization
     minPpgValue, maxPpgValue = np.min(filteredPpgValues), np.max(filteredPpgValues)
     filteredPpgValues = (filteredPpgValues - minPpgValue) / (maxPpgValue - minPpgValue)
 
+    from scipy import sparse
+    from scipy.sparse.linalg import spsolve
+
+    # Baseline Correction with Assymetric Squares used to make minimas more prominent to accurately find minimas
+    def baseline_als(y, lam, p, niter=10):
+        s = len(y)
+        D0 = sparse.eye(s)
+        d1 = [np.ones(s - 1) * -2]
+        D1 = sparse.diags(d1, [-1])
+        d2 = [np.ones(s - 2) * 1]
+        D2 = sparse.diags(d2, [-2])
+        D = D0 + D2 + D1
+        w = np.ones(s)
+        for i in range(niter):
+            W = sparse.diags([w], [0])
+            Z = W + lam * D.dot(D.transpose())
+            z = spsolve(Z, w * y)
+            w = p * (y > z) + (1 - p) * (y < z)
+
+        return z
+
+    baselineValues = baseline_als(filteredPpgValues, 300, 0.05)
+
+
+    # ------------------------------------------------------------------
+    # print("Peak Finding - Find Minima")
+    # pagkakuha nung inverted peaks. i-peak finding ung peaks, to get the correct minimas
+    # invertedPpgValues = filteredPpgValues * -1
+    invertedPpgValues = baselineValues * -1
+    invertedPpgPeaks, _ = signal.find_peaks(invertedPpgValues)
+
+    # invertedPpgPeaksAndValues = []
+    # for invertedPpgPeak in invertedPpgPeaks:
+    #     invertedPpgPeaksAndValues.append((invertedPpgPeak, invertedPpgValues[invertedPpgPeak]))
+
+    # sortedInvertedPpgPeaksAndValues = sorted(invertedPpgPeaksAndValues, reverse=True, key=lambda x: x[1])
+
+    # print("MAMA MO")
+    # print("############################")
+
+    # print(sortedInvertedPpgPeaksAndValues)
+    # print("############################")
+
+    # minimas = []
+    # for i in range(len(sortedInvertedPpgPeaksAndValues) - 1):
+    #     diff = abs(sortedInvertedPpgPeaksAndValues[i + 1][1] - sortedInvertedPpgPeaksAndValues[i][1])
+    #     print(diff, end=" ")
+    #     if abs(sortedInvertedPpgPeaksAndValues[i + 1][0] - sortedInvertedPpgPeaksAndValues[i][0]) > 30:  # width
+    #         minimas.append(sortedInvertedPpgPeaksAndValues[i][0])
+    #     if diff > 0.5:  # height
+    #         break
+
+    # print("############################")
+    # print(minimas)
+    # minimas.sort()
+    # print("MAMA MO")
+    # print(minimas)
+
+    minimas = invertedPpgPeaks
+
     # print("Plotting - Pre-processed PPG Input Signal")
     plt.subplot(312)
-    plt.title("Pre-processed Signal")
+    plt.title("Pre-processed Signal w/ Minimas")
     plt.ylabel("Normalized Value")
     plt.xlabel("Time (ms)")
+
     plt.plot(ppgTimes, filteredPpgValues)
+    plt.plot(ppgTimes[minimas], filteredPpgValues[minimas], 'x', color='magenta')
+
+    # inverted
+    # plt.plot(ppgTimes, invertedPpgValues, color='green')
+    # plt.plot(ppgTimes[minimas], invertedPpgValues[minimas], 'x', color='red')
     plt.ticklabel_format(style='sci', axis='x', scilimits=(0, 0))
+
     # ------------------------------------------------------------------
     # print("Peak Finding - PPG Systolic Peaks")
     ppgPeaks, _ = signal.find_peaks(filteredPpgValues)
@@ -200,15 +281,13 @@ if len(sys.argv) > 1:
     ppgSystolicPeaks, _ = signal.find_peaks(filteredPpgValues, distance=systolicDistance)
 
     # print("Peak Finding - Get Systolic Peaks before minima")
-    invertedPpgValues = filteredPpgValues * -1
-    invertedPpgPeaks, _ = signal.find_peaks(invertedPpgValues, distance=systolicDistance)
     initialSystolicPeaks = []
 
-    for i, invertedPpgPeak in enumerate(invertedPpgPeaks):
-        peaksBeforeInvertedPeak = [systolicPeak for systolicPeak in ppgSystolicPeaks if systolicPeak <= invertedPpgPeak]
-        if len(peaksBeforeInvertedPeak) <= 0:
+    for i, minima in enumerate(minimas):
+        peaksBeforeMinima = [systolicPeak for systolicPeak in ppgSystolicPeaks if systolicPeak <= minima]
+        if len(peaksBeforeMinima) <= 0:
             continue
-        latestSystolicPeak = max(peaksBeforeInvertedPeak)
+        latestSystolicPeak = max(peaksBeforeMinima)
         initialSystolicPeaks.append(latestSystolicPeak)
 
     ppgSystolicPeaks = initialSystolicPeaks
@@ -252,15 +331,20 @@ if len(sys.argv) > 1:
     # ------------------------------------------------------------------
     # print("Peak Finding - Filtered and Derivative Minimas")
     # print("Peak Finding - Filtered Flipped Vertical Signal Minima Finding")
-    yFlipFilteredPpgValues = filteredPpgValues * -1
-    yFlipFilteredPeaks, _ = signal.find_peaks(yFlipFilteredPpgValues)
-    yFlipFilteredDiff = np.diff(yFlipFilteredPeaks)
-    yFlipFilteredDiffAve = np.average(yFlipFilteredDiff)
-    yFlipFilteredDistanceMultiplier = 0.8
-    yFlipFilteredDistance = yFlipFilteredDiffAve * yFlipFilteredDistanceMultiplier
-    yFlipFilteredPeaks, _ = signal.find_peaks(yFlipFilteredPpgValues, distance=yFlipFilteredDistance)
-    yFlipFilteredTimes = ppgTimes[yFlipFilteredPeaks]
-    yFlipFilteredValues = filteredPpgValues[yFlipFilteredPeaks]
+    # TOTEST AND TODELETE
+    # yFlipFilteredPpgValues = filteredPpgValues * -1
+    # yFlipFilteredPeaks, _ = signal.find_peaks(yFlipFilteredPpgValues)
+    # yFlipFilteredDiff = np.diff(yFlipFilteredPeaks)
+    # yFlipFilteredDiffAve = np.average(yFlipFilteredDiff)
+    # yFlipFilteredDistanceMultiplier = 0.8
+    # yFlipFilteredDistance = yFlipFilteredDiffAve * yFlipFilteredDistanceMultiplier
+    # yFlipFilteredPeaks, _ = signal.find_peaks(yFlipFilteredPpgValues, distance=yFlipFilteredDistance)
+    # yFlipFilteredTimes = ppgTimes[yFlipFilteredPeaks]
+    # yFlipFilteredValues = filteredPpgValues[yFlipFilteredPeaks]
+
+    # TOTEST AND TODELETE ## TOUSE
+    yFlipFilteredTimes = ppgTimes[minimas]
+    yFlipFilteredValues = filteredPpgValues[minimas]
 
     # print("Peak Finding - Derivative Flipped Vertical Signal Minima Finding")
     yFlipPpgDerivativeValues = ppgDerivativeValues * -1
@@ -285,12 +369,24 @@ if len(sys.argv) > 1:
     # print("Peak Finding - PPG Diastolic Peaks")
     # First Derivative Minima after each Filtered Minima
     ppgDiastolicPeaks = []
-    for filteredMinima in yFlipFilteredPeaks:
+    for filteredMinima in minimas:
         for derivativeMinima in yFlipDerivativePeaks:
             if derivativeMinima >= filteredMinima:
                 ppgDiastolicPeaks.append(derivativeMinima)
                 break
 
+    # print("Peak Removal - PPG Diastolic Peaks")
+    # Get Diastolic Peak after each minima
+    initialDiastolicPeaks = []
+
+    for i, minima in enumerate(minimas):
+        peaksBeforeMinima = [diastolicPeak for diastolicPeak in ppgDiastolicPeaks if diastolicPeak >= minima]
+        if len(peaksBeforeMinima) <= 0:
+            continue
+        recentDiastolicPeak = min(peaksBeforeMinima)
+        initialDiastolicPeaks.append(recentDiastolicPeak)
+
+    ppgDiastolicPeaks = initialDiastolicPeaks
     ppgDiastolicTimes = ppgTimes[ppgDiastolicPeaks]
     ppgDiastolicValues = filteredPpgValues[ppgDiastolicPeaks]
 
@@ -311,7 +407,8 @@ if len(sys.argv) > 1:
     # ------------------------------------------------------------------
     # print("--------------------------------------------------")
     # print("Windowing - Determining 6 second strip window")
-    referencePoint = yFlipFilteredPeaks[0]
+    # referencePoint = yFlipFilteredPeaks[0]
+    referencePoint = minimas[0]
     ecgStartTime = ecgTimes[referencePoint]
     ecgEndTime = ecgStartTime
     for t in ecgTimes[referencePoint:]:
@@ -337,18 +434,66 @@ if len(sys.argv) > 1:
         firstDiastolicPeak = refDiastolicPeaks[0]
         finalSystolicPeaks = [p for p in finalSystolicPeaks if p >= firstDiastolicPeak]
 
+        # Get diastolic peaks after the diastolic peak of first dia-sys pair
+        for i in range(len(refDiastolicPeaks)):
+            if len(finalSystolicPeaks) > 0 and refDiastolicPeaks[i] >= finalSystolicPeaks[0] and i - 1 >= 0:
+                refDiastolicPeaks = refDiastolicPeaks[i - 1:]
+                break
+
     # print("Peak Matching - Get ECG and Diastolic Peaks Before Last Systolic Peak")
     finalDiastolicPeaks = refDiastolicPeaks
-    if len(refSystolicPeaks) > 1:
-        lastSystolicPeak = refSystolicPeaks[-1]
+    # TORECHECK
+    if len(finalSystolicPeaks) > 1:
+        lastSystolicPeak = finalSystolicPeaks[-1]
         finalDiastolicPeaks = [p for p in finalDiastolicPeaks if p <= lastSystolicPeak]
 
-    finalEcgPeakTimes = ecgTimes[finalEcgPeaks]
-    finalEcgPeakValues = filteredEcgValues[finalEcgPeaks]
-    finalSystolicPeakTimes = ppgTimes[finalSystolicPeaks]
-    finalSystolicPeakValues = filteredPpgValues[finalSystolicPeaks]
-    finalDiastolicPeakTimes = ppgTimes[finalDiastolicPeaks]
-    finalDiastolicPeakValues = filteredPpgValues[finalDiastolicPeaks]
+
+    # for i, minima in enumerate(minimas):
+    #     peaksBeforeMinima = [systolicPeak for systolicPeak in ppgSystolicPeaks if systolicPeak <= minima]
+    #     if len(peaksBeforeMinima) <= 0:
+    #         continue
+    #     latestSystolicPeak = max(peaksBeforeMinima)
+    #     initialSystolicPeaks.append(latestSystolicPeak)
+
+    peakMatches = []
+    ecgMatch, sysMatch, diaMatch = [], [], []
+
+    for i, ecgPeak in enumerate(finalEcgPeaks):
+        # get nearest systolic peak to the right of an ecg peak
+        sysPeaksAfterEcgPeak = [sysPeak for sysPeak in finalSystolicPeaks if sysPeak >= ecgPeak]
+        if len(sysPeaksAfterEcgPeak) <= 0:
+            continue
+        nearestSystolicPeak = min(sysPeaksAfterEcgPeak)
+        if nearestSystolicPeak in sysMatch:
+            continue
+
+        # get nearest diastolic peak to the left of the nearest systolic peak
+        diaPeaksBeforeEcgPeak = [diaPeak for diaPeak in finalDiastolicPeaks if diaPeak < nearestSystolicPeak]
+        if len(diaPeaksBeforeEcgPeak) <= 0:
+            continue
+        nearestDiastolicPeak = max(diaPeaksBeforeEcgPeak)
+        if nearestDiastolicPeak in diaMatch:
+            continue
+
+        if nearestDiastolicPeak < nearestSystolicPeak:
+            ecgMatch.append(ecgPeak)
+            sysMatch.append(nearestSystolicPeak)
+            diaMatch.append(nearestDiastolicPeak)
+            # peakMatches.append((ecgPeak, nearestSystolicPeak, nearestDiastolicPeak))
+
+    finalEcgPeakTimes = ecgTimes[ecgMatch]
+    finalEcgPeakValues = filteredEcgValues[ecgMatch]
+    finalSystolicPeakTimes = ppgTimes[sysMatch]
+    finalSystolicPeakValues = filteredPpgValues[sysMatch]
+    finalDiastolicPeakTimes = ppgTimes[diaMatch]
+    finalDiastolicPeakValues = filteredPpgValues[diaMatch]
+
+    # finalEcgPeakTimes = ecgTimes[finalEcgPeaks]
+    # finalEcgPeakValues = filteredEcgValues[finalEcgPeaks]
+    # finalSystolicPeakTimes = ppgTimes[finalSystolicPeaks]
+    # finalSystolicPeakValues = filteredPpgValues[finalSystolicPeaks]
+    # finalDiastolicPeakTimes = ppgTimes[finalDiastolicPeaks]
+    # finalDiastolicPeakValues = filteredPpgValues[finalDiastolicPeaks]
 
     newFigure()
     # print("Plotting - Final ECG R-Peaks")
@@ -398,7 +543,6 @@ if len(sys.argv) > 1:
     plt.tight_layout()
     plt.savefig(figureFilename, format="svg", bbox_inches='tight')
 
-    # TODO: Compute these properties
     # ------------------------------------------------------------------
     # Computing Properties
     precision = 6
