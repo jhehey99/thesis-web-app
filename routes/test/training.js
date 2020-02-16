@@ -18,6 +18,7 @@ router.post("/train", function (req, res) {
 		bos.trainingType = "bos"
 		bos.trainingId = trainingId;
 		bos.title = "Blood Oxygen Saturation";
+		bos.ylim = null;
 		console.log(bos);
 		const bosTrainer = new PyTrainer();
 		bosTrainer.train(recordType, bos);
@@ -26,7 +27,9 @@ router.post("/train", function (req, res) {
 		var systolic = req.body.systolic;
 		systolic.trainingType = "systolic"
 		systolic.trainingId = trainingId;
+		// systolic.title = `${(recordType == "bparm" ? "Arm" : "Leg")} Systolic Blood Pressure`;
 		systolic.title = "Systolic Blood Pressure";
+		systolic.ylim = recordType == "bparm" ? { bottom: 90, top: 150 } : { bottom: 100, top: 160 }
 		console.log(systolic);
 		const systolicTrainer = new PyTrainer();
 		systolicTrainer.train(recordType, systolic);
@@ -35,7 +38,9 @@ router.post("/train", function (req, res) {
 		var diastolic = req.body.diastolic;
 		diastolic.trainingType = "diastolic"
 		diastolic.trainingId = trainingId;
+		// diastolic.title = `${(recordType == "bparm" ? "Arm" : "Leg")} Diastolic Blood Pressure`;
 		diastolic.title = "Diastolic Blood Pressure";
+		diastolic.ylim = recordType == "bparm" ? { bottom: 40, top: 120 } : { bottom: 40, top: 120 }
 		console.log(diastolic);
 		const diastolicTrainer = new PyTrainer();
 		diastolicTrainer.train(recordType, diastolic);

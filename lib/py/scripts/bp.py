@@ -5,6 +5,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.signal as signal
 from scipy.interpolate import interp1d
+from scipy import sparse
+from scipy.sparse.linalg import spsolve
 
 
 np.seterr(divide='ignore', invalid='ignore')
@@ -40,7 +42,25 @@ def readTimeValuePairs(filePath, skip=0):
     return [count, npTimes, npValues]
 
 
-# print("\n##################################################\n")
+# Baseline Correction with Assymetric Squares used to make minimas more prominent to accurately find minimas
+def baseline_als(y, lam, p, niter=10):
+    s = len(y)
+    D0 = sparse.eye(s)
+    d1 = [np.ones(s - 1) * -2]
+    D1 = sparse.diags(d1, [-1])
+    d2 = [np.ones(s - 2) * 1]
+    D2 = sparse.diags(d2, [-2])
+    D = D0 + D2 + D1
+    w = np.ones(s)
+    for i in range(niter):
+        W = sparse.diags([w], [0])
+        Z = W + lam * D.dot(D.transpose())
+        z = spsolve(Z, w * y)
+        w = p * (y > z) + (1 - p) * (y < z)
+
+    return z
+
+
 if len(sys.argv) > 1:
     # print("Py Process - BPARM - Node")
     # print("--------------------------------------------------")
@@ -71,6 +91,23 @@ if len(sys.argv) > 1:
     ppgPath = f"{rawDataPath}/{dataFiles[PPG]}"
     ppgCount, ppgTimes, ppgValues = readTimeValuePairs(ppgPath, skip=100)
     # print(f"Read - PPG - Count: {ppgCount}")
+
+    # Update time to be the same
+    startTime = max(ecgTimes[0], ppgTimes[0])
+    endTime = min(ecgTimes[-1], ppgTimes[-1])
+
+    # print(ecgTimes[0], ppgTimes[0], startTime)
+    # print(ecgTimes[-1], ppgTimes[-1], endTime)
+
+    ecgIndices = [i for i in range(ecgCount) if ecgTimes[i] >= startTime and ecgTimes[i] <= endTime]
+    ecgTimes = np.array([t - startTime for t in ecgTimes[ecgIndices]])
+    ecgValues = ecgValues[ecgIndices]
+    ecgCount = len(ecgTimes)
+    ppgIndices = [i for i in range(ppgCount) if ppgTimes[i] >= startTime and ppgTimes[i] <= endTime]
+    ppgTimes = np.array([t - startTime for t in ppgTimes[ppgIndices]])
+    ppgValues = ppgValues[ppgIndices]
+    ppgCount = len(ppgTimes)
+    endTime -= startTime
 
     # print("--------------------------------------------------")
     # Interpolate signal
@@ -111,7 +148,7 @@ if len(sys.argv) > 1:
     plt.subplot(311)
     plt.title("ECG Input Signal")
     plt.ylabel("ADC Value")
-    plt.xlabel("Time (ms)")
+    plt.xlabel("Time (s)")
     plt.plot(ecgTimes, ecgValues)
     plt.ticklabel_format(style='sci', axis='x', scilimits=(0, 0))
     # ------------------------------------------------------------------
@@ -138,7 +175,7 @@ if len(sys.argv) > 1:
     plt.subplot(312)
     plt.title("Pre-processed Signal")
     plt.ylabel("Normalized Value")
-    plt.xlabel("Time (ms)")
+    plt.xlabel("Time (s)")
     plt.plot(ecgTimes, filteredEcgValues)
     plt.ticklabel_format(style='sci', axis='x', scilimits=(0, 0))
     # ------------------------------------------------------------------
@@ -161,7 +198,7 @@ if len(sys.argv) > 1:
     plt.subplot(313)
     plt.title("Initial ECG R-Peaks")
     plt.ylabel("Normalized Value")
-    plt.xlabel("Time (ms)")
+    plt.xlabel("Time (s)")
     plt.plot(ecgTimes, filteredEcgValues)
     plt.plot(ecgPeaksTimes, ecgPeaksValues, 'x', color='red')
     # plt.axhline(ecgThreshold, color='red', linestyle='dashed')
@@ -173,56 +210,31 @@ if len(sys.argv) > 1:
     plt.tight_layout()
     plt.savefig(figureFilename, format="svg", bbox_inches='tight')
     # ------------------------------------------------------------------
-    # print("--------------------------------------------------")
-    # Processing PPG
-    # print("Processing - PPG Input Signal")
-    Fs = 100
-
     # Plotting - PPG Input Signal
     # print("Plotting - PPG Input Signal")
     newFigure()
     plt.subplot(311)
     plt.title("PPG Input Signal")
     plt.ylabel("ADC Value")
-    plt.xlabel("Time (ms)")
+    plt.xlabel("Time (s)")
     plt.plot(ppgTimes, ppgValues)
     plt.ticklabel_format(style='sci', axis='x', scilimits=(0, 0))
     # ------------------------------------------------------------------
     # print("Processing - Filter and Normalize PPG Input Signal")
     ppgSos = signal.butter(10, 5, 'lowpass', fs=Fs, output='sos')
     filteredPpgValues = np.round(signal.sosfiltfilt(ppgSos, ppgValues), 4)  # zero-phase
-    unnormalizedValues = filteredPpgValues
+
+    # Detrending - TOTEST
+    signal.detrend(filteredPpgValues, overwrite_data=True)
 
     # Normalization
     minPpgValue, maxPpgValue = np.min(filteredPpgValues), np.max(filteredPpgValues)
     filteredPpgValues = (filteredPpgValues - minPpgValue) / (maxPpgValue - minPpgValue)
 
-    from scipy import sparse
-    from scipy.sparse.linalg import spsolve
-
-    # Baseline Correction with Assymetric Squares used to make minimas more prominent to accurately find minimas
-    def baseline_als(y, lam, p, niter=10):
-        s = len(y)
-        D0 = sparse.eye(s)
-        d1 = [np.ones(s - 1) * -2]
-        D1 = sparse.diags(d1, [-1])
-        d2 = [np.ones(s - 2) * 1]
-        D2 = sparse.diags(d2, [-2])
-        D = D0 + D2 + D1
-        w = np.ones(s)
-        for i in range(niter):
-            W = sparse.diags([w], [0])
-            Z = W + lam * D.dot(D.transpose())
-            z = spsolve(Z, w * y)
-            w = p * (y > z) + (1 - p) * (y < z)
-
-        return z
-
-    baselineValues = baseline_als(filteredPpgValues, 300, 0.05)
-
     # ------------------------------------------------------------------
     # print("Peak Finding - Find Minima")
     # pagkakuha nung inverted peaks. i-peak finding ung peaks, to get the correct minimas
+    baselineValues = baseline_als(filteredPpgValues, 300, 0.05)
     invertedPpgValues = baselineValues * -1
     minimas, _ = signal.find_peaks(invertedPpgValues)
 
@@ -230,14 +242,13 @@ if len(sys.argv) > 1:
     plt.subplot(312)
     plt.title("Pre-processed Signal w/ Minimas")
     plt.ylabel("Normalized Value")
-    plt.xlabel("Time (ms)")
-
+    plt.xlabel("Time (s)")
     plt.plot(ppgTimes, filteredPpgValues)
     plt.plot(ppgTimes[minimas], filteredPpgValues[minimas], 'x', color='magenta')
 
     # inverted
-    plt.plot(ppgTimes, invertedPpgValues, color='green')
-    plt.plot(ppgTimes[minimas], invertedPpgValues[minimas], 'x', color='red')
+    # plt.plot(ppgTimes, invertedPpgValues, color='green')
+    # plt.plot(ppgTimes[minimas], invertedPpgValues[minimas], 'x', color='red')
     plt.ticklabel_format(style='sci', axis='x', scilimits=(0, 0))
 
     # ------------------------------------------------------------------
@@ -268,7 +279,7 @@ if len(sys.argv) > 1:
     plt.subplot(313)
     plt.title("Initial Systolic Peaks")
     plt.ylabel("Normalized Value")
-    plt.xlabel("Time (ms)")
+    plt.xlabel("Time (s)")
     plt.plot(ppgTimes, filteredPpgValues)
     plt.plot(ppgSystolicTimes, ppgSystolicValues, 'x', color='red')
     plt.ticklabel_format(style='sci', axis='x', scilimits=(0, 0))
@@ -279,9 +290,7 @@ if len(sys.argv) > 1:
     plt.tight_layout()
     plt.savefig(figureFilename, format="svg", bbox_inches='tight')
     # ------------------------------------------------------------------
-    # print("--------------------------------------------------")
     # print("Processing - Derivative and Normalize of Filtered PPG Signal")
-
     ppgDerivativeValues = np.gradient(filteredPpgValues)
     minPpgDerivative, maxPpgDerivative = np.min(ppgDerivativeValues), np.max(ppgDerivativeValues)
     ppgDerivativeValues = (ppgDerivativeValues - minPpgDerivative) / (maxPpgDerivative - minPpgDerivative)
@@ -291,47 +300,29 @@ if len(sys.argv) > 1:
     plt.subplot(311)
     plt.title('Filtered Signal and 1st Derivative')
     plt.ylabel("Normalized Value")
-    plt.xlabel("Time (ms)")
+    plt.xlabel("Time (s)")
     pltFiltered, = plt.plot(ppgTimes, filteredPpgValues, label="Filtered")
     pltDerivative, = plt.plot(ppgTimes, ppgDerivativeValues, color="g", linestyle="dashed", label="1st Derivative")
     plt.legend(handles=[pltFiltered, pltDerivative])
     plt.ticklabel_format(style='sci', axis='x', scilimits=(0, 0))
     # plt.axhline(0, color='gray', linestyle='dashed')
-    # ------------------------------------------------------------------
-    # print("Peak Finding - Filtered and Derivative Minimas")
-    # print("Peak Finding - Filtered Flipped Vertical Signal Minima Finding")
-    # TOTEST AND TODELETE
-    # yFlipFilteredPpgValues = filteredPpgValues * -1
-    # yFlipFilteredPeaks, _ = signal.find_peaks(yFlipFilteredPpgValues)
-    # yFlipFilteredDiff = np.diff(yFlipFilteredPeaks)
-    # yFlipFilteredDiffAve = np.average(yFlipFilteredDiff)
-    # yFlipFilteredDistanceMultiplier = 0.8
-    # yFlipFilteredDistance = yFlipFilteredDiffAve * yFlipFilteredDistanceMultiplier
-    # yFlipFilteredPeaks, _ = signal.find_peaks(yFlipFilteredPpgValues, distance=yFlipFilteredDistance)
-    # yFlipFilteredTimes = ppgTimes[yFlipFilteredPeaks]
-    # yFlipFilteredValues = filteredPpgValues[yFlipFilteredPeaks]
-
-    # TOTEST AND TODELETE ## TOUSE
-    yFlipFilteredTimes = ppgTimes[minimas]
-    yFlipFilteredValues = filteredPpgValues[minimas]
 
     # print("Peak Finding - Derivative Flipped Vertical Signal Minima Finding")
-    yFlipPpgDerivativeValues = ppgDerivativeValues * -1
-    yFlipDerivativePeaks, _ = signal.find_peaks(yFlipPpgDerivativeValues)
-    yFlipDerivativePeakTimes = ppgTimes[yFlipDerivativePeaks]
+    invertedDerivativeValues = ppgDerivativeValues * -1
+    invertedDerivativePeaks, _ = signal.find_peaks(invertedDerivativeValues)
 
     # print("Plotting - Detected Filtered and First Derivative Minimas")
     plt.subplot(312)
     plt.title('Detected Filtered and First Derivative Minimas')
     plt.ylabel("Normalized Value")
-    plt.xlabel("Time (ms)")
+    plt.xlabel("Time (s)")
     plt.plot(ppgTimes, filteredPpgValues)
     plt.plot(ppgTimes, ppgDerivativeValues, color="g", linestyle="dashed")
-    plt.plot(yFlipFilteredTimes, yFlipFilteredValues, 'x', color="r")
+    plt.plot(ppgTimes[minimas], filteredPpgValues[minimas], 'x', color="r")
     plt.ticklabel_format(style='sci', axis='x', scilimits=(0, 0))
     plt.axhline(0, color='gray', linestyle='dashed')
 
-    for t in yFlipDerivativePeakTimes:
+    for t in ppgTimes[invertedDerivativePeaks]:
         plt.axvline(t, color='r', linestyle='dashed')
     # ------------------------------------------------------------------
     # print("--------------------------------------------------")
@@ -341,30 +332,22 @@ if len(sys.argv) > 1:
     for i in range(len(minimas) - 1):
         filteredMinima, nxtMinima = minimas[i], minimas[i + 1]
         derivativeMinimas = []
-        for derivativeMinima in yFlipDerivativePeaks:
-            if derivativeMinima >= filteredMinima and derivativeMinima < nxtMinima:
+        for derivativeMinima in invertedDerivativePeaks:
+            if derivativeMinima > filteredMinima + 10 and derivativeMinima < nxtMinima:
                 derivativeMinimas.append((derivativeMinima, ppgDerivativeValues[derivativeMinima]))
 
-        # print("MAMA MO NA NAMAN")
-        # print(derivativeMinimas)
         if len(derivativeMinimas) >= 3:
             derivativeMinimas.pop()
         if len(derivativeMinimas) >= 2:
             derivativeMinimas.pop()
         ppgDiastolicPeaks.append(min(derivativeMinimas, key=lambda x: abs(x[1] - 0.5))[0])
 
-
     # print("Peak Removal - PPG Diastolic Peaks")
     # Get Diastolic Peak after each minima
     initialDiastolicPeaks = []
-
-    # print("MAMA KO")
-    # print(ppgDiastolicPeaks)
-
     for i in range(len(minimas) - 1):
         minima, nxt = minimas[i], minimas[i + 1]
         peaksBeforeMinima = [diastolicPeak for diastolicPeak in ppgDiastolicPeaks if diastolicPeak >= minima and diastolicPeak < nxt]
-        # peaksBeforeMinima = [diastolicPeak for diastolicPeak in ppgDiastolicPeaks if diastolicPeak >= minima and diastolicPeak < nxt]
         if len(peaksBeforeMinima) <= 0:
             continue
 
@@ -372,11 +355,7 @@ if len(sys.argv) > 1:
         for p in peaksBeforeMinima:
             peakValsBeforeMinima.append((p, filteredPpgValues[p]))
 
-        # print("MAMA MO")
-        # print(peakValsBeforeMinima)
         recentDiastolicPeak = min(peakValsBeforeMinima, key=lambda x: x[1])[0]
-        # print(recentDiastolicPeak)
-        # recentDiastolicPeak = min(peaksBeforeMinima)
         initialDiastolicPeaks.append(recentDiastolicPeak)
 
     ppgDiastolicPeaks = initialDiastolicPeaks
@@ -387,7 +366,7 @@ if len(sys.argv) > 1:
     plt.subplot(313)
     plt.title("Initial Diastolic Peaks")
     plt.ylabel("Normalized Value")
-    plt.xlabel("Time (ms)")
+    plt.xlabel("Time (s)")
     plt.plot(ppgTimes, filteredPpgValues)
     plt.ticklabel_format(style='sci', axis='x', scilimits=(0, 0))
     plt.plot(ppgDiastolicTimes, ppgDiastolicValues, 'x', color="r")
@@ -400,26 +379,18 @@ if len(sys.argv) > 1:
     # ------------------------------------------------------------------
     # print("--------------------------------------------------")
     # print("Windowing - Determining 6 second strip window")
-    # referencePoint = yFlipFilteredPeaks[0]
-    referencePoint = minimas[0]
-    ecgStartTime = ecgTimes[referencePoint]
-    ecgEndTime = ecgStartTime
-    for t in ecgTimes[referencePoint:]:
-        if ecgStartTime + 6000 <= ecgEndTime:
+    # Get peaks within the startTime to endTime duration
+    startPoint = minimas[0]
+    startTime = ppgTimes[startPoint]
+    endTime = startTime
+    for t in ppgTimes[startPoint:]:
+        if startTime + 6000 <= endTime:
             break
-        ecgEndTime = t
+        endTime = t
 
-    ppgStartTime = ppgTimes[referencePoint]
-    ppgEndTime = ppgStartTime
-    for t in ppgTimes[referencePoint:]:
-        if ppgStartTime + 6000 <= ppgEndTime:
-            break
-        ppgEndTime = t
-
-    # print("Peak Matching - Get Points After Reference Point")
-    finalEcgPeaks = [p for p in ecgPeaks if p >= referencePoint and ecgTimes[p] <= ecgEndTime]
-    refSystolicPeaks = [p for p in ppgSystolicPeaks if p >= referencePoint and ppgTimes[p] <= ppgEndTime]
-    refDiastolicPeaks = [p for p in ppgDiastolicPeaks if p >= referencePoint and ppgTimes[p] <= ppgEndTime]
+    finalEcgPeaks = [p for p in ecgPeaks if p < len(ecgTimes) and ecgTimes[p] >= startTime and ecgTimes[p] <= endTime]
+    refSystolicPeaks = [p for p in ppgSystolicPeaks if p < len(ppgTimes) and ppgTimes[p] >= startTime and ppgTimes[p] <= endTime]
+    refDiastolicPeaks = [p for p in ppgDiastolicPeaks if p < len(ppgTimes) and ppgTimes[p] >= startTime and ppgTimes[p] <= endTime]
 
     # print("Peak Matching - Get ECG and Systolic Points After First Diastolic Peak")
     finalSystolicPeaks = refSystolicPeaks
@@ -435,43 +406,32 @@ if len(sys.argv) > 1:
 
     # print("Peak Matching - Get ECG and Diastolic Peaks Before Last Systolic Peak")
     finalDiastolicPeaks = refDiastolicPeaks
-    # TORECHECK
     if len(finalSystolicPeaks) > 1:
         lastSystolicPeak = finalSystolicPeaks[-1]
         finalDiastolicPeaks = [p for p in finalDiastolicPeaks if p <= lastSystolicPeak]
-
-    # for i, minima in enumerate(minimas):
-    #     peaksBeforeMinima = [systolicPeak for systolicPeak in ppgSystolicPeaks if systolicPeak <= minima]
-    #     if len(peaksBeforeMinima) <= 0:
-    #         continue
-    #     latestSystolicPeak = max(peaksBeforeMinima)
-    #     initialSystolicPeaks.append(latestSystolicPeak)
 
     peakMatches = []
     ecgMatch, sysMatch, diaMatch = [], [], []
 
     for i, ecgPeak in enumerate(finalEcgPeaks):
         # get nearest systolic peak to the right of an ecg peak
-        sysPeaksAfterEcgPeak = [sysPeak for sysPeak in finalSystolicPeaks if sysPeak >= ecgPeak and sysPeak not in sysMatch]
+        # sysPeaksAfterEcgPeak = [sysPeak for sysPeak in finalSystolicPeaks if sysPeak >= ecgPeak and sysPeak not in sysMatch]
+        sysPeaksAfterEcgPeak = [sysPeak for sysPeak in finalSystolicPeaks if ppgTimes[sysPeak] >= ecgTimes[ecgPeak] and sysPeak not in sysMatch]
         if len(sysPeaksAfterEcgPeak) <= 0:
             continue
         nearestSystolicPeak = min(sysPeaksAfterEcgPeak)
-        # if nearestSystolicPeak in sysMatch:
-            # continue
 
         # get nearest diastolic peak to the left of the nearest systolic peak
-        diaPeaksBeforeEcgPeak = [diaPeak for diaPeak in finalDiastolicPeaks if diaPeak < nearestSystolicPeak and diaPeak not in diaMatch]
+        # diaPeaksBeforeEcgPeak = [diaPeak for diaPeak in finalDiastolicPeaks if diaPeak < nearestSystolicPeak and diaPeak not in diaMatch]
+        diaPeaksBeforeEcgPeak = [diaPeak for diaPeak in finalDiastolicPeaks if ppgTimes[diaPeak] < ppgTimes[nearestSystolicPeak] and diaPeak not in diaMatch]
         if len(diaPeaksBeforeEcgPeak) <= 0:
             continue
         nearestDiastolicPeak = max(diaPeaksBeforeEcgPeak)
-        # if nearestDiastolicPeak in diaMatch:
-            # continue
 
         if nearestDiastolicPeak < nearestSystolicPeak:
             ecgMatch.append(ecgPeak)
             sysMatch.append(nearestSystolicPeak)
             diaMatch.append(nearestDiastolicPeak)
-            # peakMatches.append((ecgPeak, nearestSystolicPeak, nearestDiastolicPeak))
 
     finalEcgPeakTimes = ecgTimes[ecgMatch]
     finalEcgPeakValues = filteredEcgValues[ecgMatch]
@@ -480,24 +440,17 @@ if len(sys.argv) > 1:
     finalDiastolicPeakTimes = ppgTimes[diaMatch]
     finalDiastolicPeakValues = filteredPpgValues[diaMatch]
 
-    # finalEcgPeakTimes = ecgTimes[finalEcgPeaks]
-    # finalEcgPeakValues = filteredEcgValues[finalEcgPeaks]
-    # finalSystolicPeakTimes = ppgTimes[finalSystolicPeaks]
-    # finalSystolicPeakValues = filteredPpgValues[finalSystolicPeaks]
-    # finalDiastolicPeakTimes = ppgTimes[finalDiastolicPeaks]
-    # finalDiastolicPeakValues = filteredPpgValues[finalDiastolicPeaks]
-
-    newFigure()
     # print("Plotting - Final ECG R-Peaks")
+    newFigure()
     plt.subplot(311)
     plt.title("Final ECG R-Peaks")
     plt.ylabel("Normalized Value")
-    plt.xlabel("Time (ms)")
+    plt.xlabel("Time (s)")
     plt.plot(ecgTimes, filteredEcgValues)
     plt.plot(finalEcgPeakTimes, finalEcgPeakValues, 'x', color='red')
     plt.ticklabel_format(style='sci', axis='x', scilimits=(0, 0))
-    plt.axvline(ecgStartTime, linestyle='--', color='green')
-    plt.axvline(ecgEndTime, linestyle='--', color='green')
+    plt.axvline(startTime, linestyle='--', color='green')
+    plt.axvline(endTime, linestyle='--', color='green')
     for t in finalEcgPeakTimes:
         plt.axvline(t, linestyle='--', color='gray')
 
@@ -505,12 +458,12 @@ if len(sys.argv) > 1:
     plt.subplot(312)
     plt.title("Final PPG Systolic Peaks")
     plt.ylabel("Normalized Value")
-    plt.xlabel("Time (ms)")
+    plt.xlabel("Time (s)")
     plt.plot(ppgTimes, filteredPpgValues)
     plt.plot(finalSystolicPeakTimes, finalSystolicPeakValues, 'x', color='red')
     plt.ticklabel_format(style='sci', axis='x', scilimits=(0, 0))
-    plt.axvline(ppgStartTime, linestyle='--', color='green')
-    plt.axvline(ppgEndTime, linestyle='--', color='green')
+    plt.axvline(startTime, linestyle='--', color='green')
+    plt.axvline(endTime, linestyle='--', color='green')
     for t in finalSystolicPeakTimes:
         plt.axvline(t, linestyle='--', color='gray')
 
@@ -518,12 +471,12 @@ if len(sys.argv) > 1:
     plt.subplot(313)
     plt.title("Final PPG Diastolic Peaks")
     plt.ylabel("Normalized Value")
-    plt.xlabel("Time (ms)")
+    plt.xlabel("Time (s)")
     plt.plot(ppgTimes, filteredPpgValues)
     plt.plot(finalDiastolicPeakTimes, finalDiastolicPeakValues, 'x', color='red')
     plt.ticklabel_format(style='sci', axis='x', scilimits=(0, 0))
-    plt.axvline(ppgStartTime, linestyle='--', color='green')
-    plt.axvline(ppgEndTime, linestyle='--', color='green')
+    plt.axvline(startTime, linestyle='--', color='green')
+    plt.axvline(endTime, linestyle='--', color='green')
     for t in finalDiastolicPeakTimes:
         plt.axvline(t, linestyle='--', color='gray')
 

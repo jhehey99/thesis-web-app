@@ -56,6 +56,7 @@ router.get("/type/:recordType", function (req, res) {
 	var recordType = req.params.recordType;
 	console.log(`Records GET - Get records by recordType: ${recordType}`);
 	Record.find({ recordType: recordType })
+		.sort({ dateRecorded: 1 })
 		.populate({ path: "accountId", select: "username name" })
 		.exec(function (err, records) {
 			if (err) { console.error(err); return res.json(err); }

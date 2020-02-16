@@ -213,8 +213,8 @@ if len(sys.argv) > 1:
 
         finalAcPoints, finalAcComponents = [], []
         if len(dcPoints) > 0:
-            # Get indices of AC Points after the first DC Point
-            acIndices = [i for i in range(len(acPoints)) if acPoints[i] > firstDc]
+            # Get indices of AC Points after the first DC Point and before the end time
+            acIndices = [i for i in range(len(acPoints)) if acPoints[i] > firstDc and inputTime[acPoints[i]] < endTime]
             finalAcPoints = [acPoints[i] for i in acIndices]
             finalAcComponents = [round(acComponents[i], 4) for i in acIndices]
 
@@ -227,7 +227,7 @@ if len(sys.argv) > 1:
 
         finalDcPoints = []
         if len(finalAcPoints) > 1:
-            finalDcPoints = [dcp for dcp in dcPoints if dcp < lastAc]
+            finalDcPoints = [dcp for dcp in dcPoints if dcp < lastAc and inputTime[dcp] < endTime]
 
         # ------------------------------------------------------------------
         # Get AC and DC Component Time and Values

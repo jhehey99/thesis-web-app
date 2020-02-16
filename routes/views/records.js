@@ -62,7 +62,7 @@ router.get("/reprocess/:recordId", function (req, res) {
 			for (var i = 0; i < records.length; i++) {
 				data = { recordId: records[i].recordId, duration: 8 };
 				var recordType = records[i].recordType;
-				console.log("Reprocessing");
+				console.log(`Reprocessing - ${i} of ${records.length}`);
 				console.log({ data, recordType });
 
 				/* Python Config */

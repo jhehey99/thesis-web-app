@@ -15,6 +15,9 @@ function TrainingRecordListViewModel(recordType = "bos") {
 				item.spo2Id = `${recordType}-spo2-${item.index}`;
 
 				// Bp
+				item.nameId = `name-${item.index}`;
+				item.dateRecordedId = `dateRecorded-${item.index}`;
+				item.recordIdId = `recordId-${item.index}`;
 				item.hrId = `${recordType}-hr-${item.index}`;
 				item.pttId = `${recordType}-ptt-${item.index}`;
 				item.sbpId = `${recordType}-sbp-${item.index}`;

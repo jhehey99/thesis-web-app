@@ -18,7 +18,6 @@ if len(sys.argv) > 1:
     trainingType = config["trainingType"]
     title = config["title"]
     data = config["data"]
-    ylim = config["ylim"]
     length = len(data)
     precision = 6
     print(f"{title} - Input: {inputName}, Output: {outputName}, Length: {length}")
@@ -96,9 +95,6 @@ if len(sys.argv) > 1:
     plt.title(f"Training - {title}")
     plt.xlabel(inputName)
     plt.ylabel(outputName)
-    # plt.xlim(120, 200)
-    if ylim:
-        plt.ylim(ylim["bottom"], ylim["top"])
 
     # Training Properties Table
     train_cell_text = [[x] for x in train_properties.values()]
@@ -133,8 +129,6 @@ if len(sys.argv) > 1:
     plt.title(f"Testing - {title}")
     plt.xlabel(inputName)
     plt.ylabel(outputName)
-    if ylim:
-        plt.ylim(ylim["bottom"], ylim["top"])
 
     # Testing Properties Table
     test_cell_text = [[x] for x in test_properties.values()]
@@ -145,7 +139,6 @@ if len(sys.argv) > 1:
         loc=table_loc,
         bbox=table_bbox
     )
-
 
     # Adjust layout to make room for the table:
     plt.subplots_adjust(bottom=0.35)
